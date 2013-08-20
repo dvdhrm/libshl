@@ -1,0 +1,16 @@
+= libshl - Small Helper Library =
+
+This library contains several small C code snippets. They are not intended to be
+installed into a system. Instead, this repository just collects them and
+provides some runtime tests.
+
+Feel free to copy them into your application. They're dedicated to the Public
+Domain.
+
+== Contact ==
+
+This project is hosted at:
+  http://github.com/dvdhrm/libshl
+
+Feel free to contact the maintainers via email:
+  David Herrmann <dh.herrmann@gmail.com>
