@@ -22,4 +22,5 @@ libtool
 m4/
 stamp-h1
 test-suite.log
+test_dlist
 test_trie
