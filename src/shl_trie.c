@@ -33,41 +33,6 @@
  * ->otherbits is a bitmask with the most significant bit-position that differs
  * not set. So ->byte and ->otherbits can be used to identify the exact bit at
  * which the prefixes of the left and right trie start to differ.
- *
- * Note that this implementation has a quite low memory-footprint. For every
- * stored node, we need:
- *  - 1 pointer to store the user-data
- *  - 1 pointer to store the key-pointer
- *  - 1 child pointer
- *  - 1/2 size_t of prefix information
- *  - 1/2 uint8_t of prefix bit information
- * Note that we need only one "struct shl_trie_node" for 2 objects!
- * If we assume a 64bit architecture and ignore the user-data and key-pointers
- * (which are needed in every tree/list/hashtable/trie/..), we get a sum of:
- *  - 64bit child pointer
- *  - 32bit half size_t
- *  -  4bit half uint8_t
- *  -------------------
- *   100bit ~10bytes
- * With alignment this becomes 16bytes = 4 pointers
- *
- * Compare this to double-linked lists (2 pointers), rbtrees (3 pointers),
- * hashtables (~4 pointers assuming the hashtable is half-empty). It is hard to
- * argue that tries require more memory.
- *
- * Regarding performance, hashtables usually perform better. However, hashtables
- * suffer from horrible worst-cases which can be exploited by malicious users.
- * Hence, hashtables are usually not used if almost arbitrary user-input is
- * allowed.
- * Besides, prefix-search is only supported by tries.
- *
- * Regarding rbtrees or AVL trees, tries have better search times. Search times
- * are independent of the number of entries in the trie. For AVL/rbtrees, search
- * times can get much worse if the trees grow in size.
- *
- * Long story short: While there is probably a better datastructure regarding
- * performance, memory-consumption, functionality, .. there is none which
- * performs as good in all of these categories.
  */
 
 #include <errno.h>
@@ -82,10 +47,11 @@ struct shl_trie_node {
 	uint8_t otherbits;
 };
 
+/* We use a struct to simplify iterations. But it must be equivalent to a
+ * simple pointer so tell gcc to pack it (just to be safe). */
 struct shl_trie_entry {
-	void *data;
-	const uint8_t *key;
-};
+	uint8_t *key;
+} __attribute__ ((__packed__));
 
 /* We use the LSBs of pointers to distinguish nodes from entries and store
  * traversal information. Hence, we need at least a 4-byte alignment.
@@ -95,6 +61,19 @@ struct shl_trie_entry {
  * The LSB of pointers is used to distinguish nodes from entries. The second bit
  * is used during trie traversal to store state. */
 #define SHL_TRIE_ALIGNMENT ((sizeof(void*) > 4) ? sizeof(void*) : 4)
+
+/* Helper to use during insert to verify user-allocated objects have the
+ * correct alignment */
+static inline int shl_check_alignment(const void *ptr)
+{
+	unsigned long addr;
+
+	addr = (unsigned long)ptr;
+	if (addr & 0x3UL)
+		return -EFAULT;
+
+	return 0;
+}
 
 /* return true if @ptr is a node, otherwise it's an entry */
 static inline bool shl_trie_is_node(void *ptr)
@@ -194,14 +173,8 @@ static inline int shl_trie_alloc_node(struct shl_trie_node **out)
 	return shl_trie_alloc((void**)out, sizeof(**out));
 }
 
-/* allocate entry with alignment restrictions */
-static inline int shl_trie_alloc_entry(struct shl_trie_entry **out)
-{
-	return shl_trie_alloc((void**)out, sizeof(**out));
-}
-
 bool shl_trie_lookup(struct shl_trie *trie, const uint8_t *key, size_t keylen,
-		     void **out)
+		     uint8_t ***out)
 {
 	struct shl_trie_node *node;
 	uint8_t c;
@@ -242,13 +215,14 @@ bool shl_trie_lookup(struct shl_trie *trie, const uint8_t *key, size_t keylen,
 		return false;
 
 	if (out)
-		*out = shl_trie_get_entry(iter)->data;
+		*out = &shl_trie_get_entry(iter)->key;
 	return true;
 }
 
-int shl_trie_insert(struct shl_trie *trie, const uint8_t *key, size_t keylen,
-		    void *data, bool overwrite)
+int shl_trie_insert(struct shl_trie *trie, uint8_t **rkey, size_t keylen,
+		    uint8_t ***out)
 {
+	const uint8_t *key = *rkey;
 	struct shl_trie_entry *entry;
 	struct shl_trie_node *node, *new;
 	int ret;
@@ -257,17 +231,15 @@ int shl_trie_insert(struct shl_trie *trie, const uint8_t *key, size_t keylen,
 	size_t newbyte;
 	void *iter, **where;
 
+	ret = shl_check_alignment(rkey);
+	if (ret < 0)
+		return ret;
+
 	iter = trie->root;
 
-	/* Empty trie? Allocate a new entry and insert it as root. */
+	/* Empty trie? Insert it as root. */
 	if (!iter) {
-		ret = shl_trie_alloc_entry(&entry);
-		if (ret)
-			return ret;
-
-		entry->data = data;
-		entry->key = key;
-		trie->root = shl_trie_make_entry(entry);
+		trie->root = shl_trie_make_entry((struct shl_trie_entry*)rkey);
 		return 0;
 	}
 
@@ -305,13 +277,8 @@ int shl_trie_insert(struct shl_trie *trie, const uint8_t *key, size_t keylen,
 		goto insert_new;
 	}
 
-	/* @entry is the same as @key, overwrite if requested */
-	if (overwrite) {
-		entry->data = data;
-		return 0;
-	}
-
-	/* if overwrite is not allowed, notify the caller */
+	if (out)
+		*out = &entry->key;
 	return -EALREADY;
 
 insert_new:
@@ -336,16 +303,10 @@ insert_new:
 	if (ret)
 		return ret;
 
-	/* allocate new entry */
-	ret = shl_trie_alloc_entry(&entry);
-	if (ret) {
-		free(new);
-		return ret;
-	}
+	/* get entry pointer */
+	entry = shl_trie_make_entry((struct shl_trie_entry*)rkey);
 
-	/* fill in node and entry */
-	entry->data = data;
-	entry->key = key;
+	/* fill in node */
 	new->byte = newbyte;
 	new->otherbits = newotherbits;
 	new->childs[newdirection ^ 1] = shl_trie_make_entry(entry);
@@ -384,11 +345,13 @@ insert_new:
 	new->childs[newdirection] = *where;
 	*where = shl_trie_make_node(new);
 
+	if (out)
+		*out = &entry->key;
 	return 0;
 }
 
 bool shl_trie_remove(struct shl_trie *trie, const uint8_t *key, size_t keylen,
-		     const uint8_t **key_out, void **data_out)
+		     uint8_t ***out)
 {
 	struct shl_trie_node *node;
 	struct shl_trie_entry *entry;
@@ -430,13 +393,10 @@ bool shl_trie_remove(struct shl_trie *trie, const uint8_t *key, size_t keylen,
 		free(node);
 	}
 
-	/* save data so caller can free it */
-	if (data_out)
-		*data_out = entry->data;
-	if (key_out)
-		*key_out = entry->key;
+	/* save entry so caller can access it */
+	if (out)
+		*out = &entry->key;
 
-	free(entry);
 	return true;
 }
 
@@ -446,8 +406,7 @@ enum shl_trie_traverse_flags {
 };
 
 static void shl_trie_traverse(void *sub_trie,
-			      void (*do_cb) (const uint8_t *key, void *data,
-			                     void *ctx),
+			      void (*do_cb) (uint8_t **key, void *ctx),
 			      void *ctx, enum shl_trie_traverse_flags flags)
 {
 	struct shl_trie_node *node, *parent;
@@ -493,9 +452,7 @@ static void shl_trie_traverse(void *sub_trie,
 		if (!shl_trie_is_node(iter)) {
 			entry = shl_trie_get_entry(iter);
 			if (do_cb)
-				do_cb(entry->key, entry->data, ctx);
-			if (flags & SHL_TRIE_FREE)
-				free(entry);
+				do_cb(&entry->key, ctx);
 
 			iter = parent;
 			/* @entry may be freed, but we never deref it */
@@ -552,7 +509,7 @@ static void shl_trie_traverse(void *sub_trie,
 }
 
 void shl_trie_clear(struct shl_trie *trie,
-		    void (*free_cb) (const uint8_t *key, void *data, void *ctx),
+		    void (*free_cb) (uint8_t **key, void *ctx),
 		    void *ctx)
 {
 	shl_trie_traverse(trie->root, free_cb, ctx, SHL_TRIE_FREE);
@@ -560,7 +517,7 @@ void shl_trie_clear(struct shl_trie *trie,
 }
 
 void shl_trie_visit(struct shl_trie *trie, const uint8_t *prefix, size_t plen,
-		    void (*do_cb) (const uint8_t *key, void *data, void *ctx),
+		    void (*do_cb) (uint8_t **key, void *ctx),
 		    void *ctx)
 {
 	void *iter, *top;

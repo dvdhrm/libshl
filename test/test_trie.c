@@ -7,6 +7,43 @@
 
 #include "test_common.h"
 
+static char *s[] = {
+	"/some/path",
+	"/some/sub/path",
+	"/some/path/extended",
+	"/another/path",
+	"/some/more",
+	"/another/path/added",
+	"/some/path/again",
+	"/some",
+	"/",
+	"",
+	"/more/paths",
+	"relative/paths",
+	"/absolute/again",
+	"relative",
+	"relative/paths/again",
+	"another/relative/path",
+	"/some/more/absolute/paths",
+	"this/is/a/bit/longer/than/the/other/paths/without/any/proper/common/prefix/compared/to/the/others",
+	".",
+	"relative/path",
+	"last/path",
+	NULL
+};
+
+static char *u[] = {
+	"/some/",
+	"some",
+	",",
+	"/relative/paths",
+	"some/path",
+	"/some/path/",
+	"/relative/path",
+	"relativ",
+	NULL
+};
+
 START_TEST(test_trie_setup_zero)
 {
 	struct shl_trie t = { .root = TEST_INVALID_PTR, };
@@ -40,10 +77,10 @@ START_TEST(test_trie_add_zero)
 
 	shl_trie_zero(&t);
 
-	ret = shl_trie_insert_str(&t, "/some/path", (void*)0x1, SHL_TRIE_NO_OVERWRITE);
+	ret = shl_trie_insert_str(&t, &s[0], NULL);
 	ck_assert(ret == 0);
 
-	ret = shl_trie_insert_str(&t, "/some/more/path", (void*)0x2, SHL_TRIE_NO_OVERWRITE);
+	ret = shl_trie_insert_str(&t, &s[1], NULL);
 	ck_assert(ret == 0);
 
 	shl_trie_clear(&t, NULL, NULL);
@@ -56,10 +93,10 @@ START_TEST(test_trie_add_nozero)
 	struct shl_trie t = { .root = 0, };
 	int ret;
 
-	ret = shl_trie_insert_str(&t, "/some/path", (void*)0x1, SHL_TRIE_NO_OVERWRITE);
+	ret = shl_trie_insert_str(&t, &s[0], NULL);
 	ck_assert(ret == 0);
 
-	ret = shl_trie_insert_str(&t, "/some/more/path", (void*)0x2, SHL_TRIE_NO_OVERWRITE);
+	ret = shl_trie_insert_str(&t, &s[1], NULL);
 	ck_assert(ret == 0);
 
 	shl_trie_clear(&t, NULL, NULL);
@@ -75,41 +112,6 @@ START_TEST(test_trie_add_many)
 	struct shl_trie t = { .root = TEST_INVALID_PTR, };
 	int ret, i;
 	bool r;
-	const char *s[] = {
-		"/some/path",
-		"/some/sub/path",
-		"/some/path/extended",
-		"/another/path",
-		"/some/more",
-		"/another/path/added",
-		"/some/path/again",
-		"/some",
-		"/",
-		"",
-		"/more/paths",
-		"relative/paths",
-		"/absolute/again",
-		"relative",
-		"relative/paths/again",
-		"another/relative/path",
-		"/some/more/absolute/paths",
-		"this/is/a/bit/longer/than/the/other/paths/without/any/proper/common/prefix/compared/to/the/others",
-		".",
-		"relative/path",
-		"last/path",
-		NULL
-	};
-	const char *u[] = {
-		"/some/",
-		"some",
-		",",
-		"/relative/paths",
-		"some/path",
-		"/some/path/",
-		"/relative/path",
-		"relativ",
-		NULL
-	};
 
 	shl_trie_zero(&t);
 
@@ -128,7 +130,7 @@ START_TEST(test_trie_add_many)
 	/* verify inserts */
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_NO_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
@@ -160,7 +162,7 @@ START_TEST(test_trie_add_many)
 	/* insert again */
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_NO_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
@@ -176,120 +178,11 @@ START_TEST(test_trie_add_many)
 }
 END_TEST
 
-/*
- * Stress tests insertions but keep empty string not in trie.
- */
-START_TEST(test_trie_add_empty)
-{
-	struct shl_trie t = { .root = TEST_INVALID_PTR, };
-	int ret, i;
-	bool r;
-	const char *s[] = {
-		"/some/path",
-		"/some/sub/path",
-		"/some/path/extended",
-		"/another/path",
-		"/some/more",
-		"/another/path/added",
-		"/some/path/again",
-		"/some",
-		"/",
-		"/more/paths",
-		"relative/paths",
-		"/absolute/again",
-		"relative",
-		"relative/paths/again",
-		"another/relative/path",
-		"/some/more/absolute/paths",
-		"this/is/a/bit/longer/than/the/other/paths/without/any/proper/common/prefix/compared/to/the/others",
-		".",
-		"relative/path",
-		"last/path",
-		NULL
-	};
-	const char *u[] = {
-		"/some/",
-		"some",
-		",",
-		"",
-		"/relative/paths",
-		"some/path",
-		"/some/path/",
-		"/relative/path",
-		"relativ",
-		NULL
-	};
-
-	shl_trie_zero(&t);
-
-	/* test empty trie */
-
-	for (i = 0; s[i]; ++i) {
-		r = shl_trie_lookup_str(&t, s[i], NULL);
-		ck_assert(!r);
-	}
-
-	for (i = 0; u[i]; ++i) {
-		r = shl_trie_lookup_str(&t, u[i], NULL);
-		ck_assert(!r);
-	}
-
-	/* verify inserts */
-
-	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_NO_OVERWRITE);
-		ck_assert(ret == 0);
-	}
-
-	for (i = 0; s[i]; ++i) {
-		r = shl_trie_lookup_str(&t, s[i], NULL);
-		ck_assert(r);
-	}
-
-	for (i = 0; u[i]; ++i) {
-		r = shl_trie_lookup_str(&t, u[i], NULL);
-		ck_assert(!r);
-	}
-
-	/* clear and test empty trie */
-
-	shl_trie_clear(&t, NULL, NULL);
-	ck_assert(t.root == 0);
-
-	for (i = 0; s[i]; ++i) {
-		r = shl_trie_lookup_str(&t, s[i], NULL);
-		ck_assert(!r);
-	}
-
-	for (i = 0; u[i]; ++i) {
-		r = shl_trie_lookup_str(&t, u[i], NULL);
-		ck_assert(!r);
-	}
-
-	/* insert again */
-
-	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_NO_OVERWRITE);
-		ck_assert(ret == 0);
-	}
-
-	for (i = 0; s[i]; ++i) {
-		r = shl_trie_lookup_str(&t, s[i], NULL);
-		ck_assert(r);
-	}
-
-	for (i = 0; u[i]; ++i) {
-		r = shl_trie_lookup_str(&t, u[i], NULL);
-		ck_assert(!r);
-	}
-}
-END_TEST
 
 TEST_DEFINE_CASE(add)
 	TEST(test_trie_add_zero)
 	TEST(test_trie_add_nozero)
 	TEST(test_trie_add_many)
-	TEST(test_trie_add_empty)
 TEST_END_CASE
 
 /*
@@ -300,48 +193,13 @@ START_TEST(test_trie_remove)
 	struct shl_trie t = { .root = TEST_INVALID_PTR, };
 	int ret, i;
 	bool r;
-	const char *s[] = {
-		"/some/path",
-		"/some/sub/path",
-		"/some/path/extended",
-		"/another/path",
-		"/some/more",
-		"/another/path/added",
-		"/some/path/again",
-		"/some",
-		"/",
-		"/more/paths",
-		"relative/paths",
-		"/absolute/again",
-		"relative",
-		"relative/paths/again",
-		"another/relative/path",
-		"/some/more/absolute/paths",
-		"this/is/a/bit/longer/than/the/other/paths/without/any/proper/common/prefix/compared/to/the/others",
-		".",
-		"relative/path",
-		"last/path",
-		NULL
-	};
-	const char *u[] = {
-		"/some/",
-		"some",
-		",",
-		"",
-		"/relative/paths",
-		"some/path",
-		"/some/path/",
-		"/relative/path",
-		"relativ",
-		NULL
-	};
 
 	shl_trie_zero(&t);
 
 	/* verify inserts */
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_NO_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
@@ -356,7 +214,7 @@ START_TEST(test_trie_remove)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		r = shl_trie_remove_str(&t, s[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, s[i], NULL);
 		ck_assert(r);
 	}
 
@@ -388,12 +246,12 @@ START_TEST(test_trie_remove)
 	/* insert again */
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_NO_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
 	for (i = 0; u[i]; ++i) {
-		ret = shl_trie_insert_str(&t, u[i], (void*)0x1, SHL_TRIE_NO_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &u[i], NULL);
 		ck_assert(ret == 0);
 	}
 
@@ -408,7 +266,7 @@ START_TEST(test_trie_remove)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		r = shl_trie_remove_str(&t, s[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, s[i], NULL);
 		ck_assert(r);
 	}
 
@@ -423,7 +281,7 @@ START_TEST(test_trie_remove)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_NO_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
@@ -438,7 +296,7 @@ START_TEST(test_trie_remove)
 	}
 
 	for (i = 0; u[i]; ++i) {
-		r = shl_trie_remove_str(&t, u[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, u[i], NULL);
 		ck_assert(r);
 	}
 
@@ -453,7 +311,7 @@ START_TEST(test_trie_remove)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		r = shl_trie_remove_str(&t, s[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, s[i], NULL);
 		ck_assert(r);
 	}
 
@@ -469,54 +327,21 @@ START_TEST(test_trie_remove_overwrite)
 	struct shl_trie t = { .root = TEST_INVALID_PTR, };
 	int ret, i;
 	bool r;
-	const char *s[] = {
-		"/some/path",
-		"/some/sub/path",
-		"/some/path/extended",
-		"/another/path",
-		"/some/more",
-		"/another/path/added",
-		"/some/path/again",
-		"/some",
-		"/",
-		"/more/paths",
-		"relative/paths",
-		"/absolute/again",
-		"relative",
-		"relative/paths/again",
-		"another/relative/path",
-		"/some/more/absolute/paths",
-		"this/is/a/bit/longer/than/the/other/paths/without/any/proper/common/prefix/compared/to/the/others",
-		".",
-		"relative/path",
-		"last/path",
-		NULL
-	};
-	const char *u[] = {
-		"/some/",
-		"some",
-		",",
-		"",
-		"/relative/paths",
-		"some/path",
-		"/some/path/",
-		"/relative/path",
-		"relativ",
-		NULL
-	};
+	char **o;
 
 	shl_trie_zero(&t);
 
 	/* verify inserts */
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_OVERWRITE);
-		ck_assert(ret == 0);
+		ret = shl_trie_insert_str(&t, &s[i], &o);
+		ck_assert(ret == -EALREADY);
+		ck_assert(o == &s[i]);
 	}
 
 	for (i = 0; s[i]; ++i) {
@@ -530,7 +355,7 @@ START_TEST(test_trie_remove_overwrite)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		r = shl_trie_remove_str(&t, s[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, s[i], NULL);
 		ck_assert(r);
 	}
 
@@ -562,18 +387,19 @@ START_TEST(test_trie_remove_overwrite)
 	/* insert again */
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
 	for (i = 0; u[i]; ++i) {
-		ret = shl_trie_insert_str(&t, u[i], (void*)0x1, SHL_TRIE_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &u[i], NULL);
 		ck_assert(ret == 0);
 	}
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_OVERWRITE);
-		ck_assert(ret == 0);
+		ret = shl_trie_insert_str(&t, &s[i], &o);
+		ck_assert(ret == -EALREADY);
+		ck_assert(o == &s[i]);
 	}
 
 	for (i = 0; s[i]; ++i) {
@@ -587,7 +413,7 @@ START_TEST(test_trie_remove_overwrite)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		r = shl_trie_remove_str(&t, s[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, s[i], NULL);
 		ck_assert(r);
 	}
 
@@ -602,7 +428,7 @@ START_TEST(test_trie_remove_overwrite)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
@@ -617,7 +443,7 @@ START_TEST(test_trie_remove_overwrite)
 	}
 
 	for (i = 0; u[i]; ++i) {
-		r = shl_trie_remove_str(&t, u[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, u[i], NULL);
 		ck_assert(r);
 	}
 
@@ -632,7 +458,7 @@ START_TEST(test_trie_remove_overwrite)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		r = shl_trie_remove_str(&t, s[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, s[i], NULL);
 		ck_assert(r);
 	}
 
@@ -645,31 +471,28 @@ TEST_DEFINE_CASE(remove)
 	TEST(test_trie_remove_overwrite)
 TEST_END_CASE
 
-static void test_trie_visit_some_cb(const char *key, void *data, void *ctx)
+static void test_trie_visit_some_cb(char **key, void *ctx)
 {
 	int *num = ctx;
 
 	++*num;
-	ck_assert(data == (void*)0x2);
-	ck_assert_msg(strncmp(key, "/some/", 6) == 0, "invalid trie visit %s", key);
+	ck_assert_msg(strncmp(*key, "/some/", 6) == 0, "invalid trie visit %s", *key);
 }
 
-static void test_trie_visit_some2_cb(const char *key, void *data, void *ctx)
+static void test_trie_visit_some2_cb(char **key, void *ctx)
 {
 	int *num = ctx;
 
 	++*num;
-	ck_assert(data == (void*)0x2);
-	ck_assert_msg(strncmp(key, "/some", 5) == 0, "invalid trie visit %s", key);
+	ck_assert_msg(strncmp(*key, "/some", 5) == 0, "invalid trie visit %s", *key);
 }
 
-static void test_trie_visit_some3_cb(const char *key, void *data, void *ctx)
+static void test_trie_visit_some3_cb(char **key, void *ctx)
 {
 	int *num = ctx;
 
 	++*num;
-	ck_assert(data == (void*)0x2);
-	ck_assert_msg(strncmp(key, "/some/p", 7) == 0, "invalid trie visit %s", key);
+	ck_assert_msg(strncmp(*key, "/some/p", 7) == 0, "invalid trie visit %s", *key);
 }
 
 /*
@@ -680,54 +503,21 @@ START_TEST(test_trie_visit)
 	struct shl_trie t = { .root = TEST_INVALID_PTR, };
 	int ret, i, num;
 	bool r;
-	const char *s[] = {
-		"/some/path",
-		"/some/sub/path",
-		"/some/path/extended",
-		"/another/path",
-		"/some/more",
-		"/another/path/added",
-		"/some/path/again",
-		"/some",
-		"/",
-		"/more/paths",
-		"relative/paths",
-		"/absolute/again",
-		"relative",
-		"relative/paths/again",
-		"another/relative/path",
-		"/some/more/absolute/paths",
-		"this/is/a/bit/longer/than/the/other/paths/without/any/proper/common/prefix/compared/to/the/others",
-		".",
-		"relative/path",
-		"last/path",
-		NULL
-	};
-	const char *u[] = {
-		"/some/",
-		"some",
-		",",
-		"",
-		"/relative/paths",
-		"some/path",
-		"/some/path/",
-		"/relative/path",
-		"relativ",
-		NULL
-	};
+	char **o;
 
 	shl_trie_zero(&t);
 
 	/* verify inserts */
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x2, SHL_TRIE_OVERWRITE);
-		ck_assert(ret == 0);
+		ret = shl_trie_insert_str(&t, &s[i], &o);
+		ck_assert(ret == -EALREADY);
+		ck_assert(o == &s[i]);
 	}
 
 	num = 0;
@@ -764,18 +554,25 @@ START_TEST(test_trie_visit)
 	/* insert again */
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
 	for (i = 0; u[i]; ++i) {
-		ret = shl_trie_insert_str(&t, u[i], (void*)0x2, SHL_TRIE_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &u[i], NULL);
 		ck_assert(ret == 0);
 	}
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x2, SHL_TRIE_OVERWRITE);
-		ck_assert(ret == 0);
+		ret = shl_trie_insert_str(&t, &s[i], &o);
+		ck_assert(ret == -EALREADY);
+		ck_assert(o == &s[i]);
+	}
+
+	for (i = 0; u[i]; ++i) {
+		ret = shl_trie_insert_str(&t, &u[i], &o);
+		ck_assert(ret == -EALREADY);
+		ck_assert(o == &u[i]);
 	}
 
 	num = 0;
@@ -805,8 +602,9 @@ START_TEST(test_trie_visit)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		r = shl_trie_remove_str(&t, s[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, s[i], &o);
 		ck_assert(r);
+		ck_assert(o == &s[i]);
 	}
 
 	for (i = 0; u[i]; ++i) {
@@ -820,7 +618,7 @@ START_TEST(test_trie_visit)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		ret = shl_trie_insert_str(&t, s[i], (void*)0x1, SHL_TRIE_OVERWRITE);
+		ret = shl_trie_insert_str(&t, &s[i], NULL);
 		ck_assert(ret == 0);
 	}
 
@@ -835,8 +633,9 @@ START_TEST(test_trie_visit)
 	}
 
 	for (i = 0; u[i]; ++i) {
-		r = shl_trie_remove_str(&t, u[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, u[i], &o);
 		ck_assert(r);
+		ck_assert(o == &u[i]);
 	}
 
 	for (i = 0; s[i]; ++i) {
@@ -850,7 +649,7 @@ START_TEST(test_trie_visit)
 	}
 
 	for (i = 0; s[i]; ++i) {
-		r = shl_trie_remove_str(&t, s[i], NULL, NULL);
+		r = shl_trie_remove_str(&t, s[i], NULL);
 		ck_assert(r);
 	}
 

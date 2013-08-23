@@ -15,6 +15,7 @@
 #ifndef SHL_TRIE_H
 #define SHL_TRIE_H
 
+#include <errno.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -47,11 +48,7 @@ static inline void shl_trie_zero(struct shl_trie *trie)
 
 /*
  * Clear a Trie
- * This traverses the given trie and calls @free_cb() on each node. Note that it
- * does not provide the key-name to the callback. This is because keys are not
- * stored in the trie itself but the caller is required to allocate memory for
- * them. Therefore, it is very likely that the key is stored in @data itself and
- * no reason to pass it here.
+ * This traverses the given trie and calls @free_cb() on each node.
  * You can pass a context @ctx which is passed through untouched to the
  * callbacks.
  *
@@ -64,18 +61,17 @@ static inline void shl_trie_zero(struct shl_trie *trie)
  * again.
  */
 void shl_trie_clear(struct shl_trie *trie,
-		    void (*free_cb) (const uint8_t *key, void *data, void *ctx),
+		    void (*free_cb) (uint8_t **e, void *ctx),
 		    void *ctx);
 
-/* Same as shl_trie_clear() but with "const char" as key argument. */
+/* Same as shl_trie_clear() but with string-keys. */
 static inline void shl_trie_clear_str(struct shl_trie *trie,
-				      void (*free_cb) (const char *key,
-				                       void *data,
+				      void (*free_cb) (char **entry,
 				                       void *ctx),
 				      void *ctx)
 {
 	return shl_trie_clear(trie,
-			      (void(*)(const uint8_t*, void*, void*))free_cb,
+			      (void(*)(uint8_t **, void*))free_cb,
 			      ctx);
 }
 
@@ -86,66 +82,64 @@ static inline void shl_trie_clear_str(struct shl_trie *trie,
  * performance reasons. You may use strlen().
  *
  * Returns false if the element couldn't be found. Otherwise, true is returned
- * and the stored pointer is returned in @out.
+ * and a pointer to the entry is returned in @out.
+ *
+ * A caller usually has a "uint8_t **entry" pointer, and passes the address of
+ * it to shl_trie_lookup(). After it returns, "entry" is a pointer to the
+ * string-storage, that is, *entry is the stored key. Use offsetof(entry, ..) to
+ * get access to the surrounding object.
  */
 bool shl_trie_lookup(struct shl_trie *trie, const uint8_t *key, size_t keylen,
-		     void **out);
+		     uint8_t ***out);
 
-/* Same as shl_trie_lookup() but calls strlen() on the given string so you
- * don't need to know the string-length. */
+/* Same as shl_trie_lookup() but simplified for string operations. */
 static inline bool shl_trie_lookup_str(struct shl_trie *trie, const char *str,
-				       void **out)
+				       char ***out)
 {
-	return shl_trie_lookup(trie, (const uint8_t*)str, strlen(str), out);
+	return shl_trie_lookup(trie, (const uint8_t*)str, strlen(str),
+			       (uint8_t***)out);
 }
-
-#define SHL_TRIE_OVERWRITE true
-#define SHL_TRIE_NO_OVERWRITE false
 
 /*
  * Insert an element
  * Insert a new element into the trie. The key is a zero-terminated string @key
- * (with string-length @keylen). @data is stored together with the key.
- * This function fails with -EALREADY if the key is already present. Use
- * SHL_TRIE_OVERWRITE as @overwrite argument to make this function silently
- * overwrite any present entry.
+ * (with string-length @keylen).
+ * This function fails with -EALREADY if the key is already present and returns
+ * the found duplicate in @out.
  * Returns 0 on success, -ENOMEM if out of memory.
  *
  * Note that the storage of @key must be valid as long as the element is stored
- * in the trie. The key is _not_ copied into the trie. The caller must dup it or
- * store it in the context saved as @data.
+ * in the trie. The key is _not_ copied into the trie. In fact, even the storage
+ * of the pointer to @key must be valid! It can be used by the caller to store
+ * arbitrary data together with the key.
  */
-int shl_trie_insert(struct shl_trie *trie, const uint8_t *key, size_t keylen,
-		    void *data, bool overwrite);
+int shl_trie_insert(struct shl_trie *trie, uint8_t **key, size_t keylen,
+		    uint8_t ***out);
 
-/* Same as shl_trie_insert() but uses strlen() to get the key-length. */
-static inline int shl_trie_insert_str(struct shl_trie *trie, const char *str,
-				      void *data, bool overwrite)
+/* Same as shl_trie_insert() but simplified for strings. */
+static inline int shl_trie_insert_str(struct shl_trie *trie, char **str,
+				      char ***out)
 {
-	return shl_trie_insert(trie, (const uint8_t*)str, strlen(str), data,
-			       overwrite);
+	return shl_trie_insert(trie, (uint8_t**)str, strlen(*str),
+			       (uint8_t***)out);
 }
 
 /*
  * Remove an element
  * Search the trie for @key (with key-length @keylen). If not found, return
- * false. Otherwise, return true and store the key in @key_out and data in
- * @data_out.
- * Neither the key nor data are touched by the trie. The caller has to free them
- * if they were allocated on the heap.
- *
- * You can set @key_out or/and @data_out to NULL to avoid returning the given
- * pointer.
+ * false. Otherwise, return true and store the entry in @out. The entry is
+ * unlinked from the trie.
+ * You can set @out to NULL to prevent the entry from being returned.
  */
 bool shl_trie_remove(struct shl_trie *trie, const uint8_t *key, size_t keylen,
-		     const uint8_t **key_out, void **data_out);
+		     uint8_t ***out);
 
-/* Same as shl_trie_remove() but with "const char" as key type. */
+/* Same as shl_trie_remove() but with "const char" as type. */
 static inline bool shl_trie_remove_str(struct shl_trie *trie, const char *str,
-				       const char **key_out, void **data_out)
+				       char ***out)
 {
 	return shl_trie_remove(trie, (const uint8_t*)str, strlen(str),
-			       (const uint8_t**)key_out, data_out);
+			       (uint8_t***)out);
 }
 
 /*
@@ -164,19 +158,18 @@ static inline bool shl_trie_remove_str(struct shl_trie *trie, const char *str,
  * then traverse it.
  */
 void shl_trie_visit(struct shl_trie *trie, const uint8_t *prefix, size_t plen,
-		    void (*do_cb) (const uint8_t *key, void *data, void *ctx),
+		    void (*do_cb) (uint8_t **entry, void *ctx),
 		    void *ctx);
 
 /* Same as shl_trie_visit() but with "const char" as key type. */
 static inline void shl_trie_visit_str(struct shl_trie *trie,
 				      const char *prefix,
-				      void (*do_cb) (const char *key,
-				                     void *data, void *ctx),
+				      void (*do_cb) (char **entry, void *ctx),
 				      void *ctx)
 {
 	return shl_trie_visit(trie, (const uint8_t*)prefix,
 			      prefix ? strlen(prefix) : 0,
-			      (void(*)(const uint8_t*, void*, void*))do_cb,
+			      (void(*)(uint8_t**, void*))do_cb,
 			      ctx);
 }
 
