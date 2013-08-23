@@ -21,6 +21,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* a small type-safe helper to get a surrounding object */
+
+#define shl_trie_entry(pointer, type, member) ({ \
+		const typeof(((type*)0)->member) *__ptr = (pointer); \
+		(type*)(((char*)__ptr) - offsetof(type, member)); \
+	})
+
 /*
  * Trie Head
  * Embed this structure in your objects where you want the trie head to reside.
