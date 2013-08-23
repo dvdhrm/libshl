@@ -67,7 +67,7 @@ TEST_END_CASE
 
 START_TEST(test_dlist_iter)
 {
-	int num, i;
+	int num;
 	struct shl_dlist *iter, *tmp;
 
 	shl_dlist_init(&list);
