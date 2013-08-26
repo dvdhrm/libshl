@@ -83,7 +83,9 @@ noinst_LTLIBRARIES += libshl.la
 libshl_la_SOURCES = \
 	src/shl_trie.h \
 	src/shl_trie.c \
-	src/shl_dlist.h
+	src/shl_dlist.h \
+	src/shl_htable.h \
+	src/shl_htable.c
 libshl_la_CPPFLAGS = $(AM_CPPFLAGS)
 libshl_la_LDFLAGS = $(AM_LDFLAGS)
 libshl_la_LIBADD = $(AM_LIBADD)
@@ -94,7 +96,8 @@ libshl_la_LIBADD = $(AM_LIBADD)
 
 tests = \
 	test_trie \
-	test_dlist
+	test_dlist \
+	test_htable
 
 if BUILD_HAVE_CHECK
 check_PROGRAMS += $(tests)
@@ -121,6 +124,11 @@ test_dlist_SOURCES = test/test_dlist.c $(test_sources)
 test_dlist_CPPFLAGS = $(test_cflags)
 test_dlist_LDADD = $(test_libs)
 test_dlist_LDFLAGS = $(test_lflags)
+
+test_htable_SOURCES = test/test_htable.c $(test_sources)
+test_htable_CPPFLAGS = $(test_cflags)
+test_htable_LDADD = $(test_libs)
+test_htable_LDFLAGS = $(test_lflags)
 
 #
 # Phony targets

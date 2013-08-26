@@ -1,3 +1,7 @@
 = Copying =
 
 This project is dedicated to the Public Domain.
+
+Exceptions are:
+	src/shl_htable.[ch]: Released under the conditions of the LGPLv2+.
+	                     Please see LICENSE_htable for more.
