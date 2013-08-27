@@ -19,7 +19,9 @@
 #ifndef SHL_HTABLE_H
 #define SHL_HTABLE_H
 
+#include <limits.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 /* miscellaneous */
@@ -77,6 +79,10 @@ bool shl_htable_remove(struct shl_htable *htable, const void *obj, size_t hash,
 		       void **out);
 
 /* ulong htables */
+
+#if SIZE_MAX < ULONG_MAX
+#  error "'size_t' is smaller than 'unsigned long'"
+#endif
 
 bool shl_htable_compare_ulong(const void *a, const void *b);
 size_t shl_htable_rehash_ulong(const void *elem, void *priv);
