@@ -97,10 +97,24 @@ static void htable_init(struct htable *ht,
 	ht->table = &ht->perfect_bit;
 }
 
-static void htable_clear(struct htable *ht)
+static void htable_clear(struct htable *ht,
+			 void (*free_cb) (void *entry, void *ctx),
+			 void *ctx)
 {
-	if (ht->table != &ht->perfect_bit)
+	size_t i;
+
+	if (ht->table != &ht->perfect_bit) {
+		if (free_cb) {
+			for (i = 0; i < (size_t)1 << ht->bits; ++i) {
+				if (entry_is_valid(ht->table[i]))
+					free_cb(get_raw_ptr(ht, ht->table[i]),
+						ctx);
+			}
+		}
+
 		free((void *)ht->table);
+	}
+
 	htable_init(ht, ht->rehash, ht->priv);
 }
 
@@ -300,11 +314,13 @@ void shl_htable_init(struct shl_htable *htable,
 	htable_init(ht, rehash, priv);
 }
 
-void shl_htable_clear(struct shl_htable *htable)
+void shl_htable_clear(struct shl_htable *htable,
+		      void (*free_cb) (void *elem, void *ctx),
+		      void *ctx)
 {
 	struct htable *ht = (void*)&htable->htable;
 
-	htable_clear(ht);
+	htable_clear(ht, free_cb, ctx);
 }
 
 bool shl_htable_lookup(struct shl_htable *htable, const void *obj, size_t hash,

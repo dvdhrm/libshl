@@ -34,9 +34,17 @@ static struct node o[] = {
 	{ .v = 7, .key = "o7", .ul = 7 },
 };
 
+static void test_htable_str_cb(char **k, void *ctx)
+{
+	int *num = ctx;
+
+	ck_assert(to_node(k)->v == to_node(k)->ul);
+	++*num;
+}
+
 START_TEST(test_htable_str)
 {
-	int r, i;
+	int r, i, num;
 	char **k;
 	bool b;
 
@@ -149,12 +157,35 @@ START_TEST(test_htable_str)
 		ck_assert(!b);
 		ck_assert(k == NULL);
 	}
+
+	num = 0;
+	shl_htable_clear_str(&ht, test_htable_str_cb, &num);
+	ck_assert(num == 0);
+
+	/* test shl_htable_clear_str() */
+
+	for (i = 0; i < 8; ++i) {
+		r = shl_htable_insert_str(&ht, &o[i].key, &o[i].hash);
+		ck_assert(!r);
+	}
+
+	num = 0;
+	shl_htable_clear_str(&ht, test_htable_str_cb, &num);
+	ck_assert(num == 8);
 }
 END_TEST
 
+static void test_htable_ulong_cb(unsigned long *k, void *ctx)
+{
+	int *num = ctx;
+
+	ck_assert(ul_to_node(k)->v == ul_to_node(k)->ul);
+	++*num;
+}
+
 START_TEST(test_htable_ulong)
 {
-	int r, i;
+	int r, i, num;
 	unsigned long *k;
 	bool b;
 
@@ -214,6 +245,21 @@ START_TEST(test_htable_ulong)
 		ck_assert(!b);
 		ck_assert(k == NULL);
 	}
+
+	num = 0;
+	shl_htable_clear_ulong(&uht, test_htable_ulong_cb, &num);
+	ck_assert(num == 0);
+
+	/* test shl_htable_clear_ulong() */
+
+	for (i = 0; i < 8; ++i) {
+		r = shl_htable_insert_ulong(&uht, &o[i].ul);
+		ck_assert(!r);
+	}
+
+	num = 0;
+	shl_htable_clear_ulong(&uht, test_htable_ulong_cb, &num);
+	ck_assert(num == 8);
 }
 END_TEST
 
