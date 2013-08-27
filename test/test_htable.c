@@ -20,8 +20,8 @@ struct node {
 	size_t hash;
 };
 
-#define to_node(_key) shl_hlist_offsetof((_key), struct node, key)
-#define ul_to_node(_key) shl_hlist_offsetof((_key), struct node, ul)
+#define to_node(_key) shl_htable_offsetof((_key), struct node, key)
+#define ul_to_node(_key) shl_htable_offsetof((_key), struct node, ul)
 
 static struct node o[] = {
 	{ .v = 0, .key = "o0", .ul = 0 },

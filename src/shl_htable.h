@@ -26,7 +26,7 @@
 
 /* miscellaneous */
 
-#define shl_hlist_offsetof(pointer, type, member) ({ \
+#define shl_htable_offsetof(pointer, type, member) ({ \
 		const typeof(((type*)0)->member) *__ptr = (pointer); \
 		(type*)(((char*)__ptr) - offsetof(type, member)); \
 	})
