@@ -20,8 +20,10 @@ config.status
 configure
 libtool
 m4/
+src/shl_githead.c
 stamp-h1
 test-suite.log
 test_dlist
+test_githead
 test_htable
 test_trie

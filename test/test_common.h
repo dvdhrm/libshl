@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "shl_dlist.h"
+#include "shl_githead.h"
 #include "shl_htable.h"
 #include "shl_trie.h"
 
