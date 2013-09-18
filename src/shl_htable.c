@@ -118,6 +118,20 @@ static void htable_clear(struct htable *ht,
 	htable_init(ht, ht->rehash, ht->priv);
 }
 
+static void htable_visit(struct htable *ht,
+			 void (*visit_cb) (void *elem, void *ctx),
+			 void *ctx)
+{
+	size_t i;
+
+	if (visit_cb && ht->table != &ht->perfect_bit) {
+		for (i = 0; i < (size_t)1 << ht->bits; ++i) {
+			if (entry_is_valid(ht->table[i]))
+				visit_cb(get_raw_ptr(ht, ht->table[i]), ctx);
+		}
+	}
+}
+
 static size_t hash_bucket(const struct htable *ht, size_t h)
 {
 	return h & ((1 << ht->bits)-1);
@@ -321,6 +335,15 @@ void shl_htable_clear(struct shl_htable *htable,
 	struct htable *ht = (void*)&htable->htable;
 
 	htable_clear(ht, free_cb, ctx);
+}
+
+void shl_htable_visit(struct shl_htable *htable,
+		      void (*visit_cb) (void *elem, void *ctx),
+		      void *ctx)
+{
+	struct htable *ht = (void*)&htable->htable;
+
+	htable_visit(ht, visit_cb, ctx);
 }
 
 bool shl_htable_lookup(struct shl_htable *htable, const void *obj, size_t hash,

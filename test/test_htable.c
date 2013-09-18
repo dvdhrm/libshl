@@ -159,6 +159,10 @@ START_TEST(test_htable_str)
 	}
 
 	num = 0;
+	shl_htable_visit_str(&ht, test_htable_str_cb, &num);
+	ck_assert(num == 0);
+
+	num = 0;
 	shl_htable_clear_str(&ht, test_htable_str_cb, &num);
 	ck_assert(num == 0);
 
@@ -168,6 +172,10 @@ START_TEST(test_htable_str)
 		r = shl_htable_insert_str(&ht, &o[i].key, &o[i].hash);
 		ck_assert(!r);
 	}
+
+	num = 0;
+	shl_htable_visit_str(&ht, test_htable_str_cb, &num);
+	ck_assert(num == 8);
 
 	num = 0;
 	shl_htable_clear_str(&ht, test_htable_str_cb, &num);
@@ -247,6 +255,10 @@ START_TEST(test_htable_ulong)
 	}
 
 	num = 0;
+	shl_htable_visit_ulong(&uht, test_htable_ulong_cb, &num);
+	ck_assert(num == 0);
+
+	num = 0;
 	shl_htable_clear_ulong(&uht, test_htable_ulong_cb, &num);
 	ck_assert(num == 0);
 
@@ -256,6 +268,10 @@ START_TEST(test_htable_ulong)
 		r = shl_htable_insert_ulong(&uht, &o[i].ul);
 		ck_assert(!r);
 	}
+
+	num = 0;
+	shl_htable_visit_ulong(&uht, test_htable_ulong_cb, &num);
+	ck_assert(num == 8);
 
 	num = 0;
 	shl_htable_clear_ulong(&uht, test_htable_ulong_cb, &num);

@@ -75,6 +75,9 @@ void shl_htable_init(struct shl_htable *htable,
 void shl_htable_clear(struct shl_htable *htable,
 		      void (*free_cb) (void *elem, void *ctx),
 		      void *ctx);
+void shl_htable_visit(struct shl_htable *htable,
+		      void (*visit_cb) (void *elem, void *ctx),
+		      void *ctx);
 bool shl_htable_lookup(struct shl_htable *htable, const void *obj, size_t hash,
 		       void **out);
 int shl_htable_insert(struct shl_htable *htable, const void *obj, size_t hash);
@@ -107,6 +110,14 @@ static inline void shl_htable_clear_ulong(struct shl_htable *htable,
 					  void *ctx)
 {
 	shl_htable_clear(htable, (void (*) (void*, void*))cb, ctx);
+}
+
+static inline void shl_htable_visit_ulong(struct shl_htable *htable,
+					  void (*cb) (unsigned long *elem,
+					              void *ctx),
+					  void *ctx)
+{
+	shl_htable_visit(htable, (void (*) (void*, void*))cb, ctx);
 }
 
 static inline bool shl_htable_lookup_ulong(struct shl_htable *htable,
@@ -153,6 +164,14 @@ static inline void shl_htable_clear_str(struct shl_htable *htable,
 					void *ctx)
 {
 	shl_htable_clear(htable, (void (*) (void*, void*))cb, ctx);
+}
+
+static inline void shl_htable_visit_str(struct shl_htable *htable,
+					void (*cb) (char **elem,
+					            void *ctx),
+					void *ctx)
+{
+	shl_htable_visit(htable, (void (*) (void*, void*))cb, ctx);
 }
 
 static inline size_t shl_htable_hash_str(struct shl_htable *htable,
