@@ -89,12 +89,14 @@ AM_CFLAGS = \
 	-fstack-protector
 AM_CPPFLAGS = \
 	-include $(top_builddir)/config.h \
-	-I $(srcdir)/src
+	-I $(srcdir)/src \
+	$(DEPS_CFLAGS)
 AM_LDFLAGS = \
 	-Wl,--as-needed \
 	-Wl,--gc-sections \
 	-Wl,-z,relro \
-	-Wl,-z,now
+	-Wl,-z,now \
+	$(DEPS_LIBS)
 
 if BUILD_ENABLE_DEBUG
 AM_CFLAGS += -g
@@ -120,7 +122,9 @@ libshl_la_SOURCES = \
 	src/shl_trie.c \
 	src/shl_dlist.h \
 	src/shl_htable.h \
-	src/shl_htable.c
+	src/shl_htable.c \
+	src/shl_edbus.h \
+	src/shl_edbus.c
 libshl_la_CPPFLAGS = $(AM_CPPFLAGS)
 libshl_la_LDFLAGS = $(AM_LDFLAGS)
 libshl_la_LIBADD = $(AM_LIBADD)
@@ -133,7 +137,8 @@ tests = \
 	test_githead \
 	test_trie \
 	test_dlist \
-	test_htable
+	test_htable \
+	test_edbus
 
 if BUILD_HAVE_CHECK
 check_PROGRAMS += $(tests)
@@ -170,6 +175,11 @@ test_htable_SOURCES = test/test_htable.c $(test_sources)
 test_htable_CPPFLAGS = $(test_cflags)
 test_htable_LDADD = $(test_libs)
 test_htable_LDFLAGS = $(test_lflags)
+
+test_edbus_SOURCES = test/test_edbus.c $(test_sources)
+test_edbus_CPPFLAGS = $(test_cflags)
+test_edbus_LDADD = $(test_libs)
+test_edbus_LDFLAGS = $(test_lflags)
 
 #
 # Phony targets

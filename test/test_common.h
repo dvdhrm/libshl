@@ -19,13 +19,16 @@
 #ifndef TEST_COMMON_H
 #define TEST_COMMON_H
 
+#include <dbus/dbus.h>
 #include <check.h>
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <systemd/sd-daemon.h>
 #include "shl_dlist.h"
+#include "shl_edbus.h"
 #include "shl_githead.h"
 #include "shl_htable.h"
 #include "shl_trie.h"

@@ -52,6 +52,10 @@ AC_SUBST(CHECK_CFLAGS)
 AC_SUBST(CHECK_LIBS)
 AM_CONDITIONAL([BUILD_HAVE_CHECK], [test "x$have_check" = "xyes"])
 
+PKG_CHECK_MODULES([DEPS], [libsystemd-daemon dbus-1])
+AC_SUBST(DEPS_CFLAGS)
+AC_SUBST(DEPS_LIBS)
+
 #
 # Parse arguments
 # This parses all arguments that are given via "--enable-XY" or "--with-XY" and
