@@ -124,7 +124,9 @@ libshl_la_SOURCES = \
 	src/shl_htable.h \
 	src/shl_htable.c \
 	src/shl_edbus.h \
-	src/shl_edbus.c
+	src/shl_edbus.c \
+	src/shl_pty.h \
+	src/shl_pty.c
 libshl_la_CPPFLAGS = $(AM_CPPFLAGS)
 libshl_la_LDFLAGS = $(AM_LDFLAGS)
 libshl_la_LIBADD = $(AM_LIBADD)
@@ -138,7 +140,8 @@ tests = \
 	test_trie \
 	test_dlist \
 	test_htable \
-	test_edbus
+	test_edbus \
+	test_pty
 
 if BUILD_HAVE_CHECK
 check_PROGRAMS += $(tests)
@@ -180,6 +183,11 @@ test_edbus_SOURCES = test/test_edbus.c $(test_sources)
 test_edbus_CPPFLAGS = $(test_cflags)
 test_edbus_LDADD = $(test_libs)
 test_edbus_LDFLAGS = $(test_lflags)
+
+test_pty_SOURCES = test/test_pty.c $(test_sources)
+test_pty_CPPFLAGS = $(test_cflags)
+test_pty_LDADD = $(test_libs)
+test_pty_LDFLAGS = $(test_lflags)
 
 #
 # Phony targets

@@ -26,11 +26,13 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 #include <systemd/sd-daemon.h>
 #include "shl_dlist.h"
 #include "shl_edbus.h"
 #include "shl_githead.h"
 #include "shl_htable.h"
+#include "shl_pty.h"
 #include "shl_trie.h"
 
 /* lower address-space is protected from user-allocation, so this is invalid */
