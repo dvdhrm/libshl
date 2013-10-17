@@ -9,6 +9,7 @@
 
 static const char sndmsg[] = "message\n";
 static const char rcvmsg[] = "message\r\n";
+static size_t num = 0;
 
 static void run_child(void)
 {
@@ -25,18 +26,28 @@ static void run_child(void)
 
 static void pty_cb(struct shl_pty *pty, char *u8, size_t len, void *data)
 {
-	static int i;
-
 	ck_assert(len == strlen(rcvmsg));
 	ck_assert(!strncmp(u8, rcvmsg, len));
+	++num;
 }
 
 static void run_parent(int bridge, struct shl_pty *pty)
 {
-	shl_pty_write(pty, sndmsg, strlen(sndmsg));
-	shl_pty_dispatch(pty);
+	int r;
 
-	shl_pty_bridge_dispatch(bridge, -1);
+	/* write message to pty, ECHO mode guarantees that we get it back
+	 * twice: once via ECHO, once from the run_child() fn */
+	shl_pty_write(pty, sndmsg, strlen(sndmsg));
+
+	/* dispatch pending I/O before sleeping */
+	do {
+		r = shl_pty_dispatch(pty);
+	} while (r == -EAGAIN);
+
+	/* sleep and let bridge dispatch events */
+	do {
+		shl_pty_bridge_dispatch(bridge, -1);
+	} while (num < 2);
 }
 
 START_TEST(test_pty_setup)
