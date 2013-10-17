@@ -16,6 +16,7 @@
 #include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/epoll.h>
@@ -509,8 +510,11 @@ static void pty_write(struct shl_pty *pty)
 	size_t num;
 	ssize_t r;
 
-	/* ignore errors in favor of SIGCHLD; (we're edge-triggered, anyway) */
 	num = ring_peek(&pty->out_buf, vec);
+	if (!num)
+		return;
+
+	/* ignore errors in favor of SIGCHLD; (we're edge-triggered, anyway) */
 	r = writev(pty->fd, vec, (int)num);
 	if (r >= 0)
 		ring_pop(&pty->out_buf, (size_t)r);
