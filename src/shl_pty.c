@@ -544,11 +544,8 @@ int shl_pty_dispatch(struct shl_pty *pty)
 	int r;
 
 	r = pty_read(pty);
-	if (r < 0)
-		return r;
-
 	pty_write(pty);
-	return 0;
+	return r;
 }
 
 int shl_pty_write(struct shl_pty *pty, const char *u8, size_t len)
