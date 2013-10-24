@@ -216,4 +216,13 @@ void llog_dummyf(llog_submit_t llog, void *data, unsigned int sev,
 #define llog_vdENOMEM(obj, data) \
 	((void)llog_dENOMEM((obj), (data)))
 
+#define llog_dERRNO(obj, data) \
+	(llog_derror((obj), (data), "syscall failed (%d): %m", errno), -errno)
+#define llog_ERRNO(obj) \
+	(llog_dERRNO((obj)->llog, (obj)->llog_data))
+#define llog_vERRNO(obj) \
+	((void)llog_ERRNO(obj))
+#define llog_vdERRNO(obj, data) \
+	((void)llog_dERRNO((obj), (data)))
+
 #endif /* SHL_LLOG_H */
