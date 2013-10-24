@@ -40,6 +40,12 @@ static void log__time(long long *sec, long long *usec)
 {
 	struct timeval t;
 
+	/* The first log message sets the start-time. As this is unlocked, the
+	 * worst thing that can happen is that multiple messages set it. We
+	 * don't care for that and just accept short time-diffs in that case.
+	 * What we have to check is for negative time-diffs, though. Simply
+	 * revert them. */
+
 	if (log__ftime.tv_sec == 0 && log__ftime.tv_usec == 0) {
 		gettimeofday(&log__ftime, NULL);
 		*sec = 0;
@@ -50,6 +56,8 @@ static void log__time(long long *sec, long long *usec)
 		*usec = (long long)t.tv_usec - (long long)log__ftime.tv_usec;
 		if (*usec < 0) {
 			*sec -= 1;
+			if (*sec < 0)
+				*sec = 0;
 			*usec = 1000000 + *usec;
 		}
 	}
