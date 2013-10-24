@@ -33,6 +33,15 @@ enum log_severity {
 };
 
 /*
+ * Max Severity
+ * Messages with severities between log_max_sev and LOG_SEV_NUM (exclusive)
+ * are not logged, but discarded.
+ * Default: LOG_NOTICE
+ */
+
+extern unsigned int log_max_sev;
+
+/*
  * Log-Functions
  * These functions pass a log-message to the log-subsystem. Handy helpers are
  * provided below. You almost never use these directly.

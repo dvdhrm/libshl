@@ -74,6 +74,14 @@ static void log__time(long long *sec, long long *usec)
 const char *LOG_SUBSYSTEM = NULL;
 
 /*
+ * Max Severity
+ * Messages with severities between log_max_sev and LOG_SEV_NUM (exclusive)
+ * are not logged, but discarded.
+ */
+
+unsigned int log_max_sev = LOG_NOTICE;
+
+/*
  * Forward declaration so we can use the locked-versions in other functions
  * here. Be careful to avoid deadlocks, though.
  * Also set default log-subsystem to "log" for all logging inside this API.
@@ -123,6 +131,9 @@ static void log__submit(const char *file,
 	const char *prefix = NULL;
 	FILE *out;
 	long long sec, usec;
+
+	if (sev < LOG_SEV_NUM && sev > log_max_sev)
+		return;
 
 	out = stderr;
 	log__time(&sec, &usec);
