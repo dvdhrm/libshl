@@ -111,6 +111,7 @@ static void log__submit(const char *file,
 			const char *format,
 			va_list args)
 {
+	int saved_errno = errno;
 	const char *prefix = NULL;
 	FILE *out;
 	long long sec, usec;
@@ -135,6 +136,7 @@ static void log__submit(const char *file,
 			fprintf(out, "[%.4lld.%.6lld] ", sec, usec);
 	}
 
+	errno = saved_errno;
 	vfprintf(out, format, args);
 
 	if (sev == LOG_DEBUG) {
@@ -161,6 +163,7 @@ void log_submit(const char *file,
 	int saved_errno = errno;
 
 	log_lock();
+	errno = saved_errno;
 	log__submit(file, line, func, subs, sev, format, args);
 	log_unlock();
 
@@ -175,11 +178,12 @@ void log_format(const char *file,
 		const char *format,
 		...)
 {
-	va_list list;
 	int saved_errno = errno;
+	va_list list;
 
 	va_start(list, format);
 	log_lock();
+	errno = saved_errno;
 	log__submit(file, line, func, subs, sev, format, list);
 	log_unlock();
 	va_end(list);
