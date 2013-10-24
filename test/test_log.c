@@ -1,5 +1,5 @@
 /*
- * SHL - DList Tests
+ * SHL - Log Tests
  *
  * Copyright (c) 2012-2013 David Herrmann <dh.herrmann@gmail.com>
  * Dedicated to the Public Domain.
