@@ -153,4 +153,24 @@ extern const char *LOG_SUBSYSTEM;
 #define log_fatal(format, ...) \
 	log_printf(LOG_FATAL, (format), ##__VA_ARGS__)
 
+#define log_EINVAL() \
+	(log_error("invalid arguments"), -EINVAL)
+#define log_vEINVAL() \
+	((void)log_EINVAL())
+
+#define log_EFAULT() \
+	(log_error("internal operation failed"), -EFAULT)
+#define log_vEFAULT() \
+	((void)log_EFAULT())
+
+#define log_ENOMEM() \
+	(log_error("out of memory"), -ENOMEM)
+#define log_vENOMEM() \
+	((void)log_ENOMEM())
+
+#define log_ERRNO() \
+	(log_error("syscall failed (%d): %m", errno), -errno)
+#define log_vERRNO() \
+	((void)log_ERRNO())
+
 #endif /* SHL_LOG_H */
