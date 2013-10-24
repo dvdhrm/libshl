@@ -32,6 +32,7 @@
 #include "shl_edbus.h"
 #include "shl_githead.h"
 #include "shl_htable.h"
+#include "shl_log.h"
 #include "shl_pty.h"
 #include "shl_trie.h"
 

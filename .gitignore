@@ -27,5 +27,6 @@ test_dlist
 test_edbus
 test_githead
 test_htable
+test_log
 test_pty
 test_trie
