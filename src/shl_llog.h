@@ -190,7 +190,7 @@ void llog_dummyf(llog_submit_t llog, void *data, unsigned int sev,
  */
 
 #define llog_dEINVAL(obj, data) \
-	(llog_ddebug((obj), (data), "invalid arguments"), -EINVAL)
+	(llog_derror((obj), (data), "invalid arguments"), -EINVAL)
 #define llog_EINVAL(obj) \
 	(llog_dEINVAL((obj)->llog, (obj)->llog_data))
 #define llog_vEINVAL(obj) \
@@ -199,7 +199,7 @@ void llog_dummyf(llog_submit_t llog, void *data, unsigned int sev,
 	((void)llog_dEINVAL((obj), (data)))
 
 #define llog_dEFAULT(obj, data) \
-	(llog_ddebug((obj), (data), "operation failed"), -EFAULT)
+	(llog_derror((obj), (data), "internal operation failed"), -EFAULT)
 #define llog_EFAULT(obj) \
 	(llog_dEFAULT((obj)->llog, (obj)->llog_data))
 #define llog_vEFAULT(obj) \
@@ -208,7 +208,7 @@ void llog_dummyf(llog_submit_t llog, void *data, unsigned int sev,
 	((void)llog_dEFAULT((obj), (data)))
 
 #define llog_dENOMEM(obj, data) \
-	(llog_ddebug((obj), (data), "memory allocation failed"), -ENOMEM)
+	(llog_derror((obj), (data), "out of memory"), -ENOMEM)
 #define llog_ENOMEM(obj) \
 	(llog_dENOMEM((obj)->llog, (obj)->llog_data))
 #define llog_vENOMEM(obj) \
