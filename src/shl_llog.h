@@ -91,10 +91,12 @@ void llog_format(llog_submit_t llog,
 		 const char *format,
 		 ...)
 {
+	int saved_errno = errno;
 	va_list list;
 
 	if (llog) {
 		va_start(list, format);
+		errno = saved_errno;
 		llog(data, file, line, func, subs, sev, format, list);
 		va_end(list);
 	}
