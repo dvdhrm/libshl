@@ -132,11 +132,11 @@ static void log__submit(const char *file,
 	FILE *out;
 	long long sec, usec;
 
-	if (sev < LOG_SEV_NUM && sev > log_max_sev)
-		return;
-
 	out = stderr;
 	log__time(&sec, &usec);
+
+	if (sev < LOG_SEV_NUM && sev > log_max_sev)
+		return;
 
 	if (sev < LOG_SEV_NUM)
 		prefix = log__sev2str[sev];
