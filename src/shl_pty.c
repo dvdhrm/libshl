@@ -190,7 +190,7 @@ static size_t ring_peek(struct ring *r, struct iovec *vec)
 		vec[0].iov_len = r->size - r->start;
 		vec[1].iov_base = r->buf;
 		vec[1].iov_len = r->end;
-		return 2;
+		return r->end ? 2 : 1;
 	} else {
 		return 0;
 	}
