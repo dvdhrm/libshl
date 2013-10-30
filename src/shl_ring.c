@@ -207,3 +207,46 @@ void shl_ring_clear(struct shl_ring *r)
 	free(r->buf);
 	memset(r, 0, sizeof(*r));
 }
+
+char *shl_ring_copy(struct shl_ring *r, size_t *len)
+{
+	struct iovec vec[2];
+	size_t n, sum;
+	char *b;
+
+	sum = 0;
+	n = shl_ring_peek(r, vec);
+	if (n > 0)
+		sum += vec[0].iov_len;
+	if (n > 1)
+		sum += vec[1].iov_len;
+
+	if (len && *len < sum)
+		sum = *len;
+
+	b = malloc(sum + 1);
+	if (!b)
+		return NULL;
+
+	b[sum] = 0;
+	if (len)
+		*len = sum;
+
+	if (n > 0) {
+		if (vec[0].iov_len > sum)
+			vec[0].iov_len = sum;
+
+		memcpy(b, vec[0].iov_base, vec[0].iov_len);
+		sum -= vec[0].iov_len;
+
+		if (n > 1 && sum > 0) {
+			if (vec[1].iov_len > sum)
+				vec[1].iov_len = sum;
+
+			memcpy(&b[vec[0].iov_len],
+			       vec[1].iov_base, vec[1].iov_len);
+		}
+	}
+
+	return b;
+}

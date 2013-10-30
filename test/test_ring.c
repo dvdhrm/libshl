@@ -14,11 +14,18 @@ START_TEST(test_ring_setup)
 	size_t l;
 	struct iovec vec[2];
 	int s;
+	char *b;
 
 	memset(&r, 0, sizeof(r));
 
 	l = shl_ring_peek(&r, vec);
 	ck_assert(l == 0);
+
+	l = 8192;
+	b = shl_ring_copy(&r, &l);
+	ck_assert(b != NULL);
+	ck_assert(l == 0);
+	free(b);
 
 	s = shl_ring_push(&r, buf, 2048);
 	ck_assert(!s);
@@ -50,6 +57,13 @@ START_TEST(test_ring_setup)
 	ck_assert(vec[1].iov_len == 1);
 	ck_assert(!memcmp(vec[0].iov_base, buf, vec[0].iov_len));
 	ck_assert(!memcmp(vec[1].iov_base, buf, vec[1].iov_len));
+
+	l = 2050;
+	b = shl_ring_copy(&r, &l);
+	ck_assert(b != NULL);
+	ck_assert(l == 2049);
+	ck_assert(!memcmp(b, buf, l));
+	free(b);
 
 	shl_ring_pull(&r, 2048);
 
