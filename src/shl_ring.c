@@ -151,14 +151,18 @@ int shl_ring_push(struct shl_ring *r, const char *u8, size_t len)
 size_t shl_ring_peek(struct shl_ring *r, struct iovec *vec)
 {
 	if (r->end > r->start) {
-		vec[0].iov_base = &r->buf[r->start];
-		vec[0].iov_len = r->end - r->start;
+		if (vec) {
+			vec[0].iov_base = &r->buf[r->start];
+			vec[0].iov_len = r->end - r->start;
+		}
 		return 1;
 	} else if (r->end < r->start) {
-		vec[0].iov_base = &r->buf[r->start];
-		vec[0].iov_len = r->size - r->start;
-		vec[1].iov_base = r->buf;
-		vec[1].iov_len = r->end;
+		if (vec) {
+			vec[0].iov_base = &r->buf[r->start];
+			vec[0].iov_len = r->size - r->start;
+			vec[1].iov_base = r->buf;
+			vec[1].iov_len = r->end;
+		}
 		return r->end ? 2 : 1;
 	} else {
 		return 0;
