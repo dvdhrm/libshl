@@ -173,7 +173,7 @@ size_t shl_ring_peek(struct shl_ring *r, struct iovec *vec)
  * Remove @len bytes from the start of the ring-buffer. Note that we protect
  * against overflows so removing more bytes than available is safe.
  */
-void shl_ring_pop(struct shl_ring *r, size_t len)
+void shl_ring_pull(struct shl_ring *r, size_t len)
 {
 	size_t l;
 

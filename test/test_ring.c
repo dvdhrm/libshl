@@ -28,7 +28,7 @@ START_TEST(test_ring_setup)
 	ck_assert(vec[0].iov_len == 2048);
 	ck_assert(!memcmp(vec[0].iov_base, buf, vec[0].iov_len));
 
-	shl_ring_pop(&r, 2048);
+	shl_ring_pull(&r, 2048);
 
 	l = shl_ring_peek(&r, vec);
 	ck_assert(l == 0);
@@ -51,14 +51,14 @@ START_TEST(test_ring_setup)
 	ck_assert(!memcmp(vec[0].iov_base, buf, vec[0].iov_len));
 	ck_assert(!memcmp(vec[1].iov_base, buf, vec[1].iov_len));
 
-	shl_ring_pop(&r, 2048);
+	shl_ring_pull(&r, 2048);
 
 	l = shl_ring_peek(&r, vec);
 	ck_assert(l == 1);
 	ck_assert(vec[0].iov_len == 1);
 	ck_assert(!memcmp(vec[0].iov_base, buf, vec[0].iov_len));
 
-	shl_ring_pop(&r, 1);
+	shl_ring_pull(&r, 1);
 
 	s = shl_ring_push(&r, buf, 2048);
 	ck_assert(!s);
