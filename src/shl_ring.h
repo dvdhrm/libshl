@@ -27,6 +27,7 @@ struct shl_ring {
 int shl_ring_push(struct shl_ring *r, const char *u8, size_t len);
 size_t shl_ring_peek(struct shl_ring *r, struct iovec *vec);
 void shl_ring_pop(struct shl_ring *r, size_t len);
+void shl_ring_flush(struct shl_ring *r);
 void shl_ring_clear(struct shl_ring *r);
 
 #endif  /* SHL_RING_H */

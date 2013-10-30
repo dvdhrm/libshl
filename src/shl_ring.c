@@ -196,6 +196,12 @@ void shl_ring_pop(struct shl_ring *r, size_t len)
 	r->start = RING_MASK(r, r->start + l);
 }
 
+void shl_ring_flush(struct shl_ring *r)
+{
+	r->start = 0;
+	r->end = 0;
+}
+
 void shl_ring_clear(struct shl_ring *r)
 {
 	free(r->buf);
