@@ -30,4 +30,5 @@ test_htable
 test_llog
 test_log
 test_pty
+test_ring
 test_trie

@@ -35,6 +35,7 @@
 #include "shl_llog.h"
 #include "shl_log.h"
 #include "shl_pty.h"
+#include "shl_ring.h"
 #include "shl_trie.h"
 
 /* lower address-space is protected from user-allocation, so this is invalid */
