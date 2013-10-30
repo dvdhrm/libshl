@@ -31,4 +31,14 @@ void shl_ring_pull(struct shl_ring *r, size_t len);
 void shl_ring_flush(struct shl_ring *r);
 void shl_ring_clear(struct shl_ring *r);
 
+static inline size_t shl_ring_length(struct shl_ring *r)
+{
+	if (r->end > r->start)
+		return r->end - r->start;
+	else if (r->end < r->start)
+		return (r->size - r->start) + r->end;
+	else
+		return 0;
+}
+
 #endif  /* SHL_RING_H */
