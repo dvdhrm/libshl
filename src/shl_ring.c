@@ -23,7 +23,7 @@
  */
 static int ring_resize(struct shl_ring *r, size_t nsize)
 {
-	char *buf;
+	uint8_t *buf;
 
 	buf = malloc(nsize);
 	if (!buf)
@@ -106,32 +106,32 @@ static int ring_grow(struct shl_ring *r, size_t add)
  * Push @len bytes from @u8 into the ring buffer. The buffer is resized if it
  * is too small. -ENOMEM is returned on OOM, 0 on success.
  */
-int shl_ring_push(struct shl_ring *r, const char *u8, size_t len)
+int shl_ring_push(struct shl_ring *r, const void *u8, size_t size)
 {
 	int err;
 	size_t l;
 
-	err = ring_grow(r, len);
+	err = ring_grow(r, size);
 	if (err < 0)
 		return err;
 
 	if (r->start <= r->end) {
 		l = r->size - r->end;
-		if (l > len)
-			l = len;
+		if (l > size)
+			l = size;
 
 		memcpy(&r->buf[r->end], u8, l);
 		r->end = RING_MASK(r, r->end + l);
 
-		len -= l;
+		size -= l;
 		u8 += l;
 	}
 
-	if (!len)
+	if (!size)
 		return 0;
 
-	memcpy(&r->buf[r->end], u8, len);
-	r->end = RING_MASK(r, r->end + len);
+	memcpy(&r->buf[r->end], u8, size);
+	r->end = RING_MASK(r, r->end + size);
 
 	return 0;
 }
@@ -173,25 +173,25 @@ size_t shl_ring_peek(struct shl_ring *r, struct iovec *vec)
  * Remove @len bytes from the start of the ring-buffer. Note that we protect
  * against overflows so removing more bytes than available is safe.
  */
-void shl_ring_pull(struct shl_ring *r, size_t len)
+void shl_ring_pull(struct shl_ring *r, size_t size)
 {
 	size_t l;
 
 	if (r->start > r->end) {
 		l = r->size - r->start;
-		if (l > len)
-			l = len;
+		if (l > size)
+			l = size;
 
 		r->start = RING_MASK(r, r->start + l);
-		len -= l;
+		size -= l;
 	}
 
-	if (!len)
+	if (!size)
 		return;
 
 	l = r->end - r->start;
-	if (l > len)
-		l = len;
+	if (l > size)
+		l = size;
 
 	r->start = RING_MASK(r, r->start + l);
 }

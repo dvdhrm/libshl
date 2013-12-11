@@ -13,21 +13,22 @@
 #define SHL_RING_H
 
 #include <errno.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/uio.h>
 
 struct shl_ring {
-	char *buf;
+	uint8_t *buf;
 	size_t size;
 	size_t start;
 	size_t end;
 };
 
-int shl_ring_push(struct shl_ring *r, const char *u8, size_t len);
+int shl_ring_push(struct shl_ring *r, const void *u8, size_t size);
 size_t shl_ring_peek(struct shl_ring *r, struct iovec *vec);
 char *shl_ring_copy(struct shl_ring *r, size_t *len);
-void shl_ring_pull(struct shl_ring *r, size_t len);
+void shl_ring_pull(struct shl_ring *r, size_t size);
 void shl_ring_flush(struct shl_ring *r);
 void shl_ring_clear(struct shl_ring *r);
 
