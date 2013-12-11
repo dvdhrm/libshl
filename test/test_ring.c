@@ -14,50 +14,42 @@ START_TEST(test_ring_setup)
 	size_t l;
 	struct iovec vec[2];
 	int s;
-	char *b;
 
 	memset(&r, 0, sizeof(r));
 
 	l = shl_ring_peek(&r, vec);
 	ck_assert(l == 0);
 
-	l = 8192;
-	b = shl_ring_copy(&r, &l);
-	ck_assert(b != NULL);
-	ck_assert(l == 0);
-	ck_assert(shl_ring_length(&r) == 0);
-	free(b);
-
 	s = shl_ring_push(&r, buf, 2048);
 	ck_assert(!s);
-	ck_assert(shl_ring_length(&r) == 2048);
+	ck_assert(shl_ring_get_size(&r) == 2048);
 
 	l = shl_ring_peek(&r, vec);
 	ck_assert(l == 1);
 	ck_assert(vec[0].iov_len == 2048);
 	ck_assert(!memcmp(vec[0].iov_base, buf, vec[0].iov_len));
-	ck_assert(shl_ring_length(&r) == 2048);
+	ck_assert(shl_ring_get_size(&r) == 2048);
 
 	shl_ring_pull(&r, 2048);
-	ck_assert(shl_ring_length(&r) == 0);
+	ck_assert(shl_ring_get_size(&r) == 0);
 
 	l = shl_ring_peek(&r, vec);
 	ck_assert(l == 0);
-	ck_assert(shl_ring_length(&r) == 0);
+	ck_assert(shl_ring_get_size(&r) == 0);
 
 	s = shl_ring_push(&r, buf, 2048);
 	ck_assert(!s);
-	ck_assert(shl_ring_length(&r) == 2048);
+	ck_assert(shl_ring_get_size(&r) == 2048);
 
 	l = shl_ring_peek(&r, vec);
 	ck_assert(l == 1);
 	ck_assert(vec[0].iov_len == 2048);
 	ck_assert(!memcmp(vec[0].iov_base, buf, vec[0].iov_len));
-	ck_assert(shl_ring_length(&r) == 2048);
+	ck_assert(shl_ring_get_size(&r) == 2048);
 
 	s = shl_ring_push(&r, buf, 1);
 	ck_assert(!s);
-	ck_assert(shl_ring_length(&r) == 2049);
+	ck_assert(shl_ring_get_size(&r) == 2049);
 
 	l = shl_ring_peek(&r, vec);
 	ck_assert(l == 2);
@@ -65,44 +57,51 @@ START_TEST(test_ring_setup)
 	ck_assert(vec[1].iov_len == 1);
 	ck_assert(!memcmp(vec[0].iov_base, buf, vec[0].iov_len));
 	ck_assert(!memcmp(vec[1].iov_base, buf, vec[1].iov_len));
-	ck_assert(shl_ring_length(&r) == 2049);
-
-	l = 2050;
-	b = shl_ring_copy(&r, &l);
-	ck_assert(b != NULL);
-	ck_assert(l == 2049);
-	ck_assert(!memcmp(b, buf, l));
-	ck_assert(shl_ring_length(&r) == 2049);
-	free(b);
+	ck_assert(shl_ring_get_size(&r) == 2049);
 
 	shl_ring_pull(&r, 2048);
-	ck_assert(shl_ring_length(&r) == 1);
+	ck_assert(shl_ring_get_size(&r) == 1);
 
 	l = shl_ring_peek(&r, vec);
 	ck_assert(l == 1);
 	ck_assert(vec[0].iov_len == 1);
 	ck_assert(!memcmp(vec[0].iov_base, buf, vec[0].iov_len));
-	ck_assert(shl_ring_length(&r) == 1);
+	ck_assert(shl_ring_get_size(&r) == 1);
 
 	shl_ring_pull(&r, 1);
-	ck_assert(shl_ring_length(&r) == 0);
+	ck_assert(shl_ring_get_size(&r) == 0);
 
 	s = shl_ring_push(&r, buf, 2048);
 	ck_assert(!s);
-	ck_assert(shl_ring_length(&r) == 2048);
+	ck_assert(shl_ring_get_size(&r) == 2048);
 
-	s = shl_ring_push(&r, buf, 2048);
+	s = shl_ring_push(&r, buf, 2049);
 	ck_assert(!s);
-	ck_assert(shl_ring_length(&r) == 4096);
+	ck_assert(shl_ring_get_size(&r) == 4097);
 
 	l = shl_ring_peek(&r, vec);
 	ck_assert(l == 1);
-	ck_assert(vec[0].iov_len == 4096);
+	ck_assert(vec[0].iov_len == 4097);
 	ck_assert(!memcmp(vec[0].iov_base, buf, vec[0].iov_len));
-	ck_assert(shl_ring_length(&r) == 4096);
+	ck_assert(shl_ring_get_size(&r) == 4097);
+
+	shl_ring_pull(&r, 1);
+	ck_assert(shl_ring_get_size(&r) == 4096);
+
+	s = shl_ring_push(&r, buf, 4096);
+	ck_assert(!s);
+	ck_assert(shl_ring_get_size(&r) == 8192);
+
+	l = shl_ring_peek(&r, vec);
+	ck_assert(l == 2);
+	ck_assert(vec[0].iov_len == 8191);
+	ck_assert(vec[1].iov_len == 1);
+	ck_assert(!memcmp(vec[0].iov_base, buf, vec[0].iov_len));
+	ck_assert(!memcmp(vec[1].iov_base, buf, vec[1].iov_len));
+	ck_assert(shl_ring_get_size(&r) == 8192);
 
 	shl_ring_clear(&r);
-	ck_assert(shl_ring_length(&r) == 0);
+	ck_assert(shl_ring_get_size(&r) == 0);
 }
 END_TEST
 

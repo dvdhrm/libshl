@@ -17,123 +17,16 @@
 
 #define RING_MASK(_r, _v) ((_v) & ((_r)->size - 1))
 
-/*
- * Resize ring-buffer to size @nsize. @nsize must be a power-of-2, otherwise
- * ring operations will behave incorrectly.
- */
-static int ring_resize(struct shl_ring *r, size_t nsize)
+void shl_ring_flush(struct shl_ring *r)
 {
-	uint8_t *buf;
+	r->start = 0;
+	r->used = 0;
+}
 
-	buf = malloc(nsize);
-	if (!buf)
-		return -ENOMEM;
-
-	if (r->end == r->start) {
-		r->end = 0;
-		r->start = 0;
-	} else if (r->end > r->start) {
-		memcpy(buf, &r->buf[r->start], r->end - r->start);
-
-		r->end -= r->start;
-		r->start = 0;
-	} else {
-		memcpy(buf, &r->buf[r->start], r->size - r->start);
-		memcpy(&buf[r->size - r->start], r->buf, r->end);
-
-		r->end += r->size - r->start;
-		r->start = 0;
-	}
-
+void shl_ring_clear(struct shl_ring *r)
+{
 	free(r->buf);
-	r->buf = buf;
-	r->size = nsize;
-
-	return 0;
-}
-
-/* Compute next higher power-of-2 of @v. Returns 4096 in case v is 0. */
-static size_t ring_pow2(size_t v)
-{
-	size_t i;
-
-	if (!v)
-		return 4096;
-
-	--v;
-
-	for (i = 1; i < 8 * sizeof(size_t); i *= 2)
-		v |= v >> i;
-
-	return ++v;
-}
-
-/*
- * Resize ring-buffer to provide enough room for @add bytes of new data. This
- * resizes the buffer if it is too small. It returns -ENOMEM on OOM and 0 on
- * success.
- */
-static int ring_grow(struct shl_ring *r, size_t add)
-{
-	size_t len;
-
-	/*
-	 * Note that "end == start" means "empty buffer". Hence, we can never
-	 * fill the last byte of a buffer. That means, we must account for an
-	 * additional byte here ("end == start"-byte).
-	 */
-
-	if (r->end < r->start)
-		len = r->start - r->end;
-	else
-		len = r->start + r->size - r->end;
-
-	/* don't use ">=" as "end == start" would be ambigious */
-	if (len > add)
-		return 0;
-
-	/* +1 for additional "end == start" byte */
-	len = r->size + add - len + 1;
-	len = ring_pow2(len);
-
-	if (len <= r->size)
-		return -ENOMEM;
-
-	return ring_resize(r, len);
-}
-
-/*
- * Push @len bytes from @u8 into the ring buffer. The buffer is resized if it
- * is too small. -ENOMEM is returned on OOM, 0 on success.
- */
-int shl_ring_push(struct shl_ring *r, const void *u8, size_t size)
-{
-	int err;
-	size_t l;
-
-	err = ring_grow(r, size);
-	if (err < 0)
-		return err;
-
-	if (r->start <= r->end) {
-		l = r->size - r->end;
-		if (l > size)
-			l = size;
-
-		memcpy(&r->buf[r->end], u8, l);
-		r->end = RING_MASK(r, r->end + l);
-
-		size -= l;
-		u8 += l;
-	}
-
-	if (!size)
-		return 0;
-
-	memcpy(&r->buf[r->end], u8, size);
-	r->end = RING_MASK(r, r->end + size);
-
-	return 0;
+	memset(r, 0, sizeof(*r));
 }
 
 /*
@@ -150,23 +43,115 @@ int shl_ring_push(struct shl_ring *r, const void *u8, size_t size)
  */
 size_t shl_ring_peek(struct shl_ring *r, struct iovec *vec)
 {
-	if (r->end > r->start) {
+	if (r->used == 0) {
+		return 0;
+	} else if (r->start + r->used <= r->size) {
 		if (vec) {
 			vec[0].iov_base = &r->buf[r->start];
-			vec[0].iov_len = r->end - r->start;
+			vec[0].iov_len = r->used;
 		}
 		return 1;
-	} else if (r->end < r->start) {
+	} else {
 		if (vec) {
 			vec[0].iov_base = &r->buf[r->start];
 			vec[0].iov_len = r->size - r->start;
 			vec[1].iov_base = r->buf;
-			vec[1].iov_len = r->end;
+			vec[1].iov_len = r->used - (r->size - r->start);
 		}
-		return r->end ? 2 : 1;
-	} else {
-		return 0;
+		return 2;
 	}
+}
+
+/*
+ * Resize ring-buffer to size @nsize. @nsize must be a power-of-2, otherwise
+ * ring operations will behave incorrectly.
+ */
+static int ring_resize(struct shl_ring *r, size_t nsize)
+{
+	uint8_t *buf;
+	size_t l;
+
+	buf = malloc(nsize);
+	if (!buf)
+		return -ENOMEM;
+
+	if (r->used > 0) {
+		l = r->size - r->start;
+		if (r->used <= l) {
+			memcpy(buf, &r->buf[r->start], r->used);
+		} else {
+			memcpy(buf, &r->buf[r->start], l);
+			memcpy(&buf[l], r->buf, r->used - l);
+		}
+	}
+
+	free(r->buf);
+	r->buf = buf;
+	r->size = nsize;
+	r->start = 0;
+
+	return 0;
+}
+
+/* align to next higher power-of-2 (except for: 0 => 0, overflow => 0) */
+static inline size_t ALIGN_POWER2(size_t u)
+{
+	return 1ULL << ((sizeof(u) * 8ULL) - __builtin_clzll(u - 1ULL));
+}
+
+/*
+ * Resize ring-buffer to provide enough room for @add bytes of new data. This
+ * resizes the buffer if it is too small. It returns -ENOMEM on OOM and 0 on
+ * success.
+ */
+static int ring_grow(struct shl_ring *r, size_t add)
+{
+	size_t need;
+
+	if (r->size - r->used >= add)
+		return 0;
+
+	need = r->used + add;
+	if (need <= r->used)
+		return -ENOMEM;
+	else if (need < 4096)
+		need = 4096;
+
+	need = ALIGN_POWER2(need);
+	if (need == 0)
+		return -ENOMEM;
+
+	return ring_resize(r, need);
+}
+
+/*
+ * Push @len bytes from @u8 into the ring buffer. The buffer is resized if it
+ * is too small. -ENOMEM is returned on OOM, 0 on success.
+ */
+int shl_ring_push(struct shl_ring *r, const void *u8, size_t size)
+{
+	int err;
+	size_t pos, l;
+
+	if (size == 0)
+		return 0;
+
+	err = ring_grow(r, size);
+	if (err < 0)
+		return err;
+
+	pos = RING_MASK(r, r->start + r->used);
+	l = r->size - pos;
+	if (l >= size) {
+		memcpy(&r->buf[pos], u8, size);
+	} else {
+		memcpy(&r->buf[pos], u8, l);
+		memcpy(r->buf, (const uint8_t*)u8 + l, size - l);
+	}
+
+	r->used += size;
+
+	return 0;
 }
 
 /*
@@ -175,78 +160,9 @@ size_t shl_ring_peek(struct shl_ring *r, struct iovec *vec)
  */
 void shl_ring_pull(struct shl_ring *r, size_t size)
 {
-	size_t l;
+	if (size > r->used)
+		size = r->used;
 
-	if (r->start > r->end) {
-		l = r->size - r->start;
-		if (l > size)
-			l = size;
-
-		r->start = RING_MASK(r, r->start + l);
-		size -= l;
-	}
-
-	if (!size)
-		return;
-
-	l = r->end - r->start;
-	if (l > size)
-		l = size;
-
-	r->start = RING_MASK(r, r->start + l);
-}
-
-void shl_ring_flush(struct shl_ring *r)
-{
-	r->start = 0;
-	r->end = 0;
-}
-
-void shl_ring_clear(struct shl_ring *r)
-{
-	free(r->buf);
-	memset(r, 0, sizeof(*r));
-}
-
-char *shl_ring_copy(struct shl_ring *r, size_t *len)
-{
-	struct iovec vec[2];
-	size_t n, sum;
-	char *b;
-
-	sum = 0;
-	n = shl_ring_peek(r, vec);
-	if (n > 0)
-		sum += vec[0].iov_len;
-	if (n > 1)
-		sum += vec[1].iov_len;
-
-	if (len && *len < sum)
-		sum = *len;
-
-	b = malloc(sum + 1);
-	if (!b)
-		return NULL;
-
-	b[sum] = 0;
-	if (len)
-		*len = sum;
-
-	if (n > 0) {
-		if (vec[0].iov_len > sum)
-			vec[0].iov_len = sum;
-
-		memcpy(b, vec[0].iov_base, vec[0].iov_len);
-		sum -= vec[0].iov_len;
-
-		if (n > 1 && sum > 0) {
-			if (vec[1].iov_len > sum)
-				vec[1].iov_len = sum;
-
-			memcpy(&b[vec[0].iov_len],
-			       vec[1].iov_base, vec[1].iov_len);
-		}
-	}
-
-	return b;
+	r->start = RING_MASK(r, r->start + size);
+	r->used -= size;
 }
