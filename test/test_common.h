@@ -40,6 +40,7 @@
 #include "shl_pty.h"
 #include "shl_ring.h"
 #include "shl_trie.h"
+#include "shl_util.h"
 
 /* lower address-space is protected from user-allocation, so this is invalid */
 #define TEST_INVALID_PTR ((void*)0x10)

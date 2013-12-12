@@ -34,3 +34,4 @@ test_macro
 test_pty
 test_ring
 test_trie
+test_util

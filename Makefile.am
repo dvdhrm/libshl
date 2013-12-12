@@ -133,7 +133,9 @@ libshl_la_SOURCES = \
 	src/shl_ring.h \
 	src/shl_ring.c \
 	src/shl_buf.h \
-	src/shl_macro.h
+	src/shl_macro.h \
+	src/shl_util.h \
+	src/shl_util.c
 libshl_la_CPPFLAGS = $(AM_CPPFLAGS)
 libshl_la_LDFLAGS = $(AM_LDFLAGS)
 libshl_la_LIBADD = $(AM_LIBADD)
@@ -153,7 +155,8 @@ tests = \
 	test_llog \
 	test_ring \
 	test_buf \
-	test_macro
+	test_macro \
+	test_util
 
 if BUILD_HAVE_CHECK
 check_PROGRAMS += $(tests)
@@ -225,6 +228,11 @@ test_macro_SOURCES = test/test_macro.c $(test_sources)
 test_macro_CPPFLAGS = $(test_cflags)
 test_macro_LDADD = $(test_libs)
 test_macro_LDFLAGS = $(test_lflags)
+
+test_util_SOURCES = test/test_util.c $(test_sources)
+test_util_CPPFLAGS = $(test_cflags)
+test_util_LDADD = $(test_libs)
+test_util_LDFLAGS = $(test_lflags)
 
 #
 # Phony targets
