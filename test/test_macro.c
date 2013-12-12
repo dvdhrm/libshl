@@ -140,6 +140,55 @@ START_TEST(test_macro_intptr)
 }
 END_TEST
 
+#define TEST_MULT(_suffix, _var, _a, _b, _r) \
+	({ \
+		_var = (_a); \
+		ck_assert(!shl_mult_ ## _suffix (&_var, (_b))); \
+		ck_assert_int_eq(_var, (_r)); \
+	})
+
+#define TEST_MULT_RANGE(_suffix, _var, _a, _b) \
+	({ \
+		_var = (_a); \
+		ck_assert(shl_mult_ ## _suffix (&_var, (_b)) == -ERANGE); \
+	})
+
+START_TEST(test_util_misc_arithmetic)
+{
+	unsigned int vu;
+	unsigned long vul;
+	unsigned long long vull;
+	uint8_t v8;
+	uint16_t v16;
+	uint32_t v32;
+	uint64_t v64;
+
+	TEST_MULT(u, vu, 0U, 0U, 0U);
+	TEST_MULT(ul, vul, 0UL, 0UL, 0UL);
+	TEST_MULT(ull, vull, 0ULL, 0ULL, 0ULL);
+	TEST_MULT(u8, v8, 0ULL, 0ULL, 0ULL);
+	TEST_MULT(u16, v16, 0ULL, 0ULL, 0ULL);
+	TEST_MULT(u32, v32, 0ULL, 0ULL, 0ULL);
+	TEST_MULT(u64, v64, 0ULL, 0ULL, 0ULL);
+
+	TEST_MULT_RANGE(u, vu, 2U, UINT_MAX);
+	TEST_MULT_RANGE(ul, vul, 2UL, ULONG_MAX);
+	TEST_MULT_RANGE(ull, vull, 2ULL, ULLONG_MAX);
+	TEST_MULT_RANGE(u8, v8, 2ULL, UINT8_MAX);
+	TEST_MULT_RANGE(u16, v16, 2ULL, UINT16_MAX);
+	TEST_MULT_RANGE(u32, v32, 2ULL, UINT32_MAX);
+	TEST_MULT_RANGE(u64, v64, 2ULL, UINT64_MAX);
+
+	TEST_MULT(u, vu, (UINT_MAX & ~0x3U) / 4U, 4, UINT_MAX & ~0x3U);
+	TEST_MULT(ul, vul, (ULONG_MAX & ~0x3UL) / 4UL, 4, ULONG_MAX & ~0x3UL);
+	TEST_MULT(ull, vull, (ULLONG_MAX & ~0x3ULL) / 4ULL, 4, ULLONG_MAX & ~0x3ULL);
+	TEST_MULT(u8, v8, (UINT8_MAX & ~0x3ULL) / 4ULL, 4, UINT8_MAX & ~0x3ULL);
+	TEST_MULT(u16, v16, (UINT16_MAX & ~0x3ULL) / 4ULL, 4, UINT16_MAX & ~0x3ULL);
+	TEST_MULT(u32, v32, (UINT32_MAX & ~0x3ULL) / 4ULL, 4, UINT32_MAX & ~0x3ULL);
+	TEST_MULT(u64, v64, (UINT64_MAX & ~0x3ULL) / 4ULL, 4, UINT64_MAX & ~0x3ULL);
+}
+END_TEST
+
 TEST_DEFINE_CASE(misc)
 	TEST(test_macro_stringify)
 	TEST(test_macro_concatenate)
@@ -152,6 +201,7 @@ TEST_DEFINE_CASE(misc)
 	TEST(test_macro_align_power2)
 	TEST(test_macro_zero)
 	TEST(test_macro_intptr)
+	TEST(test_util_misc_arithmetic)
 TEST_END_CASE
 
 TEST_DEFINE(

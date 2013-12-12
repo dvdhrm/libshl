@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -140,5 +141,79 @@ static inline size_t SHL_ALIGN_POWER2(size_t u)
 
 /* compile-time assertions */
 #define shl_assert_cc(_expr) static_assert(_expr, #_expr)
+
+/*
+ * Safe Multiplications
+ * Multiplications are subject to overflows. These helpers guarantee that the
+ * multiplication can be done safely and return -ERANGE if not.
+ *
+ * Note: This is horribly slow for ull/uint64_t as we need a division to test
+ * for overflows. Take that into account when using these. For smaller integers,
+ * we can simply use an upcast-multiplication which gcc should be smart enough
+ * to optimize.
+ */
+
+#define SHL__REAL_MULT(_max, _val, _factor) \
+	({ \
+		(_factor == 0 || *(_val) <= (_max) / (_factor)) ? \
+			((*(_val) *= (_factor)), 0) : \
+			-ERANGE; \
+	})
+
+#define SHL__UPCAST_MULT(_type, _max, _val, _factor) \
+	({ \
+		_type v = *(_val) * (_type)(_factor); \
+		(v <= (_max)) ? \
+			((*(_val) = v), 0) : \
+			-ERANGE; \
+	})
+
+static inline int shl_mult_ull(unsigned long long *val,
+			       unsigned long long factor)
+{
+	return SHL__REAL_MULT(ULLONG_MAX, val, factor);
+}
+
+static inline int shl_mult_ul(unsigned long *val, unsigned long factor)
+{
+#if ULONG_MAX < ULLONG_MAX
+	return SHL__UPCAST_MULT(unsigned long long, ULONG_MAX, val, factor);
+#else
+	shl_assert_cc(sizeof(unsigned long) == sizeof(unsigned long long));
+	return shl_mult_ull((unsigned long long*)val, factor);
+#endif
+}
+
+static inline int shl_mult_u(unsigned int *val, unsigned int factor)
+{
+#if UINT_MAX < ULONG_MAX
+	return SHL__UPCAST_MULT(unsigned long, UINT_MAX, val, factor);
+#elif UINT_MAX < ULLONG_MAX
+	return SHL__UPCAST_MULT(unsigned long long, UINT_MAX, val, factor);
+#else
+	shl_assert_cc(sizeof(unsigned int) == sizeof(unsigned long long));
+	return shl_mult_ull(val, factor);
+#endif
+}
+
+static inline int shl_mult_u64(uint64_t *val, uint64_t factor)
+{
+	return SHL__REAL_MULT(UINT64_MAX, val, factor);
+}
+
+static inline int shl_mult_u32(uint32_t *val, uint32_t factor)
+{
+	return SHL__UPCAST_MULT(uint_fast64_t, UINT32_MAX, val, factor);
+}
+
+static inline int shl_mult_u16(uint16_t *val, uint16_t factor)
+{
+	return SHL__UPCAST_MULT(uint_fast32_t, UINT16_MAX, val, factor);
+}
+
+static inline int shl_mult_u8(uint8_t *val, uint8_t factor)
+{
+	return SHL__UPCAST_MULT(uint_fast16_t, UINT8_MAX, val, factor);
+}
 
 #endif  /* SHL_MACRO_H */
