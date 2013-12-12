@@ -106,9 +106,6 @@ int shl_atoi_ulln(const char *str,
 	val2 = 0;
 	r = 0;
 
-	if (base == 0)
-		base = shl__skip_base(&str, &len);
-
 	if (base > 36) {
 		if (next)
 			*next = str;
@@ -116,6 +113,9 @@ int shl_atoi_ulln(const char *str,
 			*out = 0;
 		return -EINVAL;
 	}
+
+	if (base == 0)
+		base = shl__skip_base(&str, &len);
 
 	for (pos = 0; pos < len; ++pos) {
 		c = shl_ctoi(str[pos], base);
