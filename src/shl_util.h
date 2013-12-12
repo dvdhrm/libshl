@@ -37,6 +37,11 @@ int shl_atoi_un(const char *str,
 		unsigned int base,
 		const char **next,
 		unsigned int *out);
+int shl_atoi_zn(const char *str,
+		size_t len,
+		unsigned int base,
+		const char **next,
+		size_t *out);
 
 static inline int shl_atoi_ull(const char *str,
 			       unsigned int base,
@@ -60,6 +65,14 @@ static inline int shl_atoi_u(const char *str,
 			     unsigned int *out)
 {
 	return shl_atoi_un(str, strlen(str), base, next, out);
+}
+
+static inline int shl_atoi_z(const char *str,
+			     unsigned int base,
+			     const char **next,
+			     size_t *out)
+{
+	return shl_atoi_zn(str, strlen(str), base, next, out);
 }
 
 /* greedy alloc */

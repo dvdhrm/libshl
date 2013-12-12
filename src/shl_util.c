@@ -194,6 +194,25 @@ int shl_atoi_un(const char *str,
 	return r;
 }
 
+int shl_atoi_zn(const char *str,
+		size_t len,
+		unsigned int base,
+		const char **next,
+		size_t *out)
+{
+	unsigned long long val;
+	int r;
+
+	r = shl_atoi_ulln(str, len, base, next, &val);
+	if (r >= 0 && val > SIZE_MAX)
+		r = -ERANGE;
+
+	if (out)
+		*out = shl_min(val, (unsigned long long)SIZE_MAX);
+
+	return r;
+}
+
 /*
  * Greedy Realloc
  * The greedy-realloc helpers simplify power-of-2 buffer allocations. If you
