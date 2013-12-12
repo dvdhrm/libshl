@@ -12,6 +12,7 @@
 #ifndef SHL_MACRO_H
 #define SHL_MACRO_H
 
+#include <assert.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <stdlib.h>
@@ -136,5 +137,8 @@ static inline size_t SHL_ALIGN_POWER2(size_t u)
 #define SHL_S64_TO_PTR(_ptr) SHL_TYPE_TO_PTR(int64_t, (_ptr))
 #define SHL_PTR_TO_U64(_ptr) SHL_PTR_TO_TYPE(uint64_t, (_ptr))
 #define SHL_U64_TO_PTR(_ptr) SHL_TYPE_TO_PTR(uint64_t, (_ptr))
+
+/* compile-time assertions */
+#define shl_assert_cc(_expr) static_assert(_expr, #_expr)
 
 #endif  /* SHL_MACRO_H */
