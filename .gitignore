@@ -30,6 +30,7 @@ test_githead
 test_htable
 test_llog
 test_log
+test_macro
 test_pty
 test_ring
 test_trie

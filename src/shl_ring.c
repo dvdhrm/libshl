@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/uio.h>
+#include "shl_macro.h"
 #include "shl_ring.h"
 
 #define RING_MASK(_r, _v) ((_v) & ((_r)->size - 1))
@@ -93,12 +94,6 @@ static int ring_resize(struct shl_ring *r, size_t nsize)
 	return 0;
 }
 
-/* align to next higher power-of-2 (except for: 0 => 0, overflow => 0) */
-static inline size_t ALIGN_POWER2(size_t u)
-{
-	return 1ULL << ((sizeof(u) * 8ULL) - __builtin_clzll(u - 1ULL));
-}
-
 /*
  * Resize ring-buffer to provide enough room for @add bytes of new data. This
  * resizes the buffer if it is too small. It returns -ENOMEM on OOM and 0 on
@@ -117,7 +112,7 @@ static int ring_grow(struct shl_ring *r, size_t add)
 	else if (need < 4096)
 		need = 4096;
 
-	need = ALIGN_POWER2(need);
+	need = SHL_ALIGN_POWER2(need);
 	if (need == 0)
 		return -ENOMEM;
 

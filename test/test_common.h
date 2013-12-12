@@ -22,6 +22,7 @@
 #include <dbus/dbus.h>
 #include <check.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -35,6 +36,7 @@
 #include "shl_htable.h"
 #include "shl_llog.h"
 #include "shl_log.h"
+#include "shl_macro.h"
 #include "shl_pty.h"
 #include "shl_ring.h"
 #include "shl_trie.h"
