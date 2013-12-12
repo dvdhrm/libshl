@@ -187,3 +187,49 @@ int shl_atoi_un(const char *str,
 
 	return r;
 }
+
+/*
+ * Greedy Realloc
+ * The greedy-realloc helpers simplify power-of-2 buffer allocations. If you
+ * have a dynamic array, simply use shl_greedy_realloc() for re-allocations
+ * and it makes sure your buffer-size is always a multiple of 2 and is big
+ * enough for your new entries.
+ * Default size is 64, but you can initialize your buffer to a bigger default
+ * if you need.
+ */
+
+void *shl_greedy_realloc(void **mem, size_t *size, size_t need)
+{
+	size_t nsize;
+	void *p;
+
+	if (*size >= need)
+		return *mem;
+
+	nsize = SHL_ALIGN_POWER2(shl_max_t(size_t, 64U, need));
+	if (nsize == 0)
+		return NULL;
+
+	p = realloc(*mem, nsize);
+	if (!p)
+		return NULL;
+
+	*mem = p;
+	*size = nsize;
+	return p;
+}
+
+void *shl_greedy_realloc0(void **mem, size_t *size, size_t need)
+{
+	size_t prev = *size;
+	uint8_t *p;
+
+	p = shl_greedy_realloc(mem, size, need);
+	if (!p)
+		return NULL;
+
+	if (*size > prev)
+		shl_memzero(&p[prev], *size - prev);
+
+	return p;
+}

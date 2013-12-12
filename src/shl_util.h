@@ -62,4 +62,9 @@ static inline int shl_atoi_u(const char *str,
 	return shl_atoi_un(str, strlen(str), base, next, out);
 }
 
+/* greedy alloc */
+
+void *shl_greedy_realloc(void **mem, size_t *size, size_t need);
+void *shl_greedy_realloc0(void **mem, size_t *size, size_t need);
+
 #endif  /* SHL_UTIL_H */
