@@ -144,8 +144,14 @@ int shl_atoi_ulln(const char *str,
 
 	if (next)
 		*next = (char*)&str[pos];
-	if (out)
-		*out = huge ? val2 : (unsigned long long)val1;
+	if (out) {
+		if (r < 0)
+			*out = ULLONG_MAX;
+		else if (huge)
+			*out = val2;
+		else
+			*out = val1;
+	}
 
 	return r;
 }
@@ -164,7 +170,7 @@ int shl_atoi_uln(const char *str,
 		r = -ERANGE;
 
 	if (out)
-		*out = val;
+		*out = shl_min(val, (unsigned long long)ULONG_MAX);
 
 	return r;
 }
@@ -183,7 +189,7 @@ int shl_atoi_un(const char *str,
 		r = -ERANGE;
 
 	if (out)
-		*out = val;
+		*out = shl_min(val, (unsigned long long)UINT_MAX);
 
 	return r;
 }

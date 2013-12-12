@@ -31,7 +31,7 @@ START_TEST(test_util_atoi_ctoi)
 }
 END_TEST
 
-#define TEST_ATOI_RAW(_suffix, _type, _str, _val, _base, _r, _off) \
+#define TEST_ATOI_RAW(_suffix, _type, _max, _str, _val, _base, _r, _off) \
 	({ \
 		_type v; \
 		const char *off = NULL; \
@@ -40,10 +40,12 @@ END_TEST
 		ck_assert_ptr_eq((void*)off, (void*)&(_str)[(_off)]); \
 		if ((_r) >= 0) \
 			ck_assert_int_eq(v, (_val)); \
+		else if ((_r) == -ERANGE) \
+			ck_assert_int_eq(v, (_max)); \
 	})
 
 #define TEST_ATOI(_str, _val, _base, _r, _off) \
-	TEST_ATOI_RAW(ull, unsigned long long, (_str), (_val), (_base), (_r), (_off))
+	TEST_ATOI_RAW(ull, unsigned long long, ULLONG_MAX, (_str), (_val), (_base), (_r), (_off))
 
 START_TEST(test_util_atoi_base)
 {
@@ -73,9 +75,9 @@ START_TEST(test_util_atoi_base)
 END_TEST
 
 #define TEST_ATOI_UL(_str, _val, _base, _r, _off) \
-	TEST_ATOI_RAW(ul, unsigned long, (_str), (_val), (_base), (_r), (_off))
+	TEST_ATOI_RAW(ul, unsigned long, ULONG_MAX, (_str), (_val), (_base), (_r), (_off))
 #define TEST_ATOI_U(_str, _val, _base, _r, _off) \
-	TEST_ATOI_RAW(u, unsigned int, (_str), (_val), (_base), (_r), (_off))
+	TEST_ATOI_RAW(u, unsigned int, UINT_MAX, (_str), (_val), (_base), (_r), (_off))
 
 START_TEST(test_util_atoi_types)
 {
