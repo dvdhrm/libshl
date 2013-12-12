@@ -15,72 +15,66 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/uio.h>
+#include "shl_macro.h"
+#include "shl_util.h"
 
 struct shl_buf {
-	char *buf;
+	uint8_t *buf;
 	size_t size;
-	size_t len;
+	size_t used;
 };
-
-/* Compute next higher power-of-2 of @v. Returns 4096 in case v is 0. */
-static inline size_t shl_buf_pow2(size_t v)
-{
-	size_t i;
-
-	if (!v)
-		return 4096;
-
-	--v;
-
-	for (i = 1; i < 8 * sizeof(size_t); i *= 2)
-		v |= v >> i;
-
-	return ++v;
-}
-
-static inline int shl_buf_push(struct shl_buf *b, const char *d, size_t l)
-{
-	size_t nlen;
-	char *buf;
-
-	if (b->size - b->len < l) {
-		nlen = shl_buf_pow2(b->len + l);
-		if (nlen <= b->size)
-			return -ENOMEM;
-
-		buf = realloc(b->buf, nlen);
-		if (!buf)
-			return -ENOMEM;
-
-		b->buf = buf;
-		b->size = nlen;
-	}
-
-	memcpy(&b->buf[b->len], d, l);
-	b->len += l;
-
-	return 0;
-}
-
-static inline void shl_buf_pull(struct shl_buf *b, size_t l)
-{
-	if (l > b->len)
-		l = b->len;
-
-	memmove(b->buf, &b->buf[l], b->len - l);
-	b->len -= l;
-}
 
 static inline void shl_buf_flush(struct shl_buf *b)
 {
-	b->len = 0;
+	b->used = 0;
 }
 
 static inline void shl_buf_clear(struct shl_buf *b)
 {
 	free(b->buf);
-	memset(b, 0, sizeof(*b));
+	shl_zero(*b);
+}
+
+static inline void *shl_buf_get_data(struct shl_buf *b)
+{
+	return b->buf;
+}
+
+static inline size_t shl_buf_get_size(struct shl_buf *b)
+{
+	return b->used;
+}
+
+static inline int shl_buf_push(struct shl_buf *b, const void *d, size_t l)
+{
+	size_t nlen;
+
+	if (!l)
+		return 0;
+
+	nlen = b->used + l;
+	if (nlen <= b->used)
+		return -ENOMEM;
+
+	if (!shl_greedy_realloc((void**)&b->buf, &b->size, nlen))
+		return -ENOMEM;
+
+	memcpy(&b->buf[b->used], d, l);
+	b->used += l;
+
+	return 0;
+}
+
+static inline void shl_buf_pop(struct shl_buf *b, size_t l)
+{
+	b->used -= shl_min(b->used, l);
+}
+
+static inline void shl_buf_pull(struct shl_buf *b, size_t l)
+{
+	l = shl_min(b->used, l);
+	memmove(b->buf, &b->buf[l], b->used - l);
+	b->used -= l;
 }
 
 #endif  /* SHL_BUF_H */

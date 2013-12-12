@@ -13,24 +13,24 @@ START_TEST(test_buf_setup)
 	struct shl_buf b;
 	int r;
 
-	memset(&b, 0, sizeof(b));
+	shl_zero(b);
 
 	r = shl_buf_push(&b, buf, 4096);
 	ck_assert(!r);
-	ck_assert(b.len == 4096);
-	ck_assert(!memcmp(b.buf, buf, b.len));
+	ck_assert(shl_buf_get_size(&b) == 4096);
+	ck_assert(!memcmp(shl_buf_get_data(&b), buf, shl_buf_get_size(&b)));
 
 	r = shl_buf_push(&b, buf, 4096);
 	ck_assert(!r);
-	ck_assert(b.len == 8192);
-	ck_assert(!memcmp(b.buf, buf, b.len));
+	ck_assert(shl_buf_get_size(&b) == 8192);
+	ck_assert(!memcmp(shl_buf_get_data(&b), buf, shl_buf_get_size(&b)));
 
 	shl_buf_pull(&b, 4096);
-	ck_assert(b.len == 4096);
-	ck_assert(!memcmp(b.buf, buf, b.len));
+	ck_assert(shl_buf_get_size(&b) == 4096);
+	ck_assert(!memcmp(shl_buf_get_data(&b), buf, shl_buf_get_size(&b)));
 
 	shl_buf_flush(&b);
-	ck_assert(b.len == 0);
+	ck_assert(shl_buf_get_size(&b) == 0);
 
 	shl_buf_clear(&b);
 }
