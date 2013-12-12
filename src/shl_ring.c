@@ -64,6 +64,31 @@ size_t shl_ring_peek(struct shl_ring *r, struct iovec *vec)
 }
 
 /*
+ * Copy data from the ring buffer into the linear external buffer @buf. Copy
+ * at most @size bytes. If the ring buffer size is smaller, copy less bytes and
+ * return the number of bytes copied.
+ */
+size_t shl_ring_copy(struct shl_ring *r, void *buf, size_t size)
+{
+	size_t l;
+
+	if (size > r->used)
+		size = r->used;
+
+	if (size > 0) {
+		l = r->size - r->start;
+		if (size <= l) {
+			memcpy(buf, &r->buf[r->start], size);
+		} else {
+			memcpy(buf, &r->buf[r->start], l);
+			memcpy((uint8_t*)buf + l, r->buf, size - l);
+		}
+	}
+
+	return size;
+}
+
+/*
  * Resize ring-buffer to size @nsize. @nsize must be a power-of-2, otherwise
  * ring operations will behave incorrectly.
  */

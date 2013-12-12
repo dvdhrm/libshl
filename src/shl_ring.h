@@ -34,6 +34,9 @@ void shl_ring_clear(struct shl_ring *r);
 /* get pointers to buffer data and their length */
 size_t shl_ring_peek(struct shl_ring *r, struct iovec *vec);
 
+/* copy data into external linear buffer */
+size_t shl_ring_copy(struct shl_ring *r, void *buf, size_t size);
+
 /* push data to the end of the buffer */
 int shl_ring_push(struct shl_ring *r, const void *u8, size_t size);
 
