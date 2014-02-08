@@ -118,6 +118,29 @@ static void htable_clear(struct htable *ht,
 	htable_init(ht, ht->rehash, ht->priv);
 }
 
+size_t shl_htable_this_or_next(struct shl_htable *htable, size_t i)
+{
+	struct htable *ht = (void*)&htable->htable;
+
+	if (ht->table != &ht->perfect_bit)
+		for ( ; i < (size_t)1 << ht->bits; ++i)
+			if (entry_is_valid(ht->table[i]))
+				return i;
+
+	return SIZE_MAX;
+}
+
+void *shl_htable_get_entry(struct shl_htable *htable, size_t i)
+{
+	struct htable *ht = (void*)&htable->htable;
+
+	if (i < (size_t)1 << ht->bits)
+		if (entry_is_valid(ht->table[i]))
+			return get_raw_ptr(ht, ht->table[i]);
+
+	return NULL;
+}
+
 static void htable_visit(struct htable *ht,
 			 void (*visit_cb) (void *elem, void *ctx),
 			 void *ctx)

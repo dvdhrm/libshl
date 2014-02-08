@@ -38,6 +38,9 @@ static struct node o[] = {
 	{ .v = 7, .key = "o7", .ul = 7, .ui = 7 },
 };
 
+#define TEST_FOREACH_STR(_iter, _ht) \
+	SHL_HTABLE_FOREACH_MACRO(_iter, (_ht), to_node)
+
 static void test_htable_str_cb(char **k, void *ctx)
 {
 	int *num = ctx;
@@ -48,6 +51,7 @@ static void test_htable_str_cb(char **k, void *ctx)
 
 START_TEST(test_htable_str)
 {
+	struct node *iter;
 	int r, i, num;
 	char **k;
 	bool b;
@@ -167,6 +171,13 @@ START_TEST(test_htable_str)
 	ck_assert(num == 0);
 
 	num = 0;
+	TEST_FOREACH_STR(iter, &ht) {
+		ck_assert(iter->v == iter->ul);
+		++num;
+	}
+	ck_assert(num == 0);
+
+	num = 0;
 	shl_htable_clear_str(&ht, test_htable_str_cb, &num);
 	ck_assert(num == 0);
 
@@ -179,6 +190,13 @@ START_TEST(test_htable_str)
 
 	num = 0;
 	shl_htable_visit_str(&ht, test_htable_str_cb, &num);
+	ck_assert(num == 8);
+
+	num = 0;
+	TEST_FOREACH_STR(iter, &ht) {
+		ck_assert(iter->v == iter->ul);
+		++num;
+	}
 	ck_assert(num == 8);
 
 	num = 0;

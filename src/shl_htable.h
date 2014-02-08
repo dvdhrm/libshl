@@ -84,6 +84,22 @@ int shl_htable_insert(struct shl_htable *htable, const void *obj, size_t hash);
 bool shl_htable_remove(struct shl_htable *htable, const void *obj, size_t hash,
 		       void **out);
 
+size_t shl_htable_this_or_next(struct shl_htable *htable, size_t i);
+void *shl_htable_get_entry(struct shl_htable *htable, size_t i);
+
+#define SHL_HTABLE_FOREACH(_iter, _ht) for ( \
+		size_t htable__i = shl_htable_this_or_next((_ht), 0); \
+		(_iter = shl_htable_get_entry((_ht), htable__i)); \
+		htable__i = shl_htable_this_or_next((_ht), htable__i + 1) \
+	)
+
+#define SHL_HTABLE_FOREACH_MACRO(_iter, _ht, _accessor) for ( \
+		size_t htable__i = shl_htable_this_or_next((_ht), 0); \
+		(_iter = shl_htable_get_entry((_ht), htable__i), \
+		 _iter = _iter ? _accessor((void*)_iter) : NULL); \
+		htable__i = shl_htable_this_or_next((_ht), htable__i + 1) \
+	)
+
 /* uint htables */
 
 #if SIZE_MAX < UINT_MAX
