@@ -130,15 +130,64 @@ START_TEST(test_util_atoi_types)
 }
 END_TEST
 
+static void test_cat(const char *a, const char *b, const char *ab)
+{
+	char *x;
+
+	x = shl_strcat(a, b);
+	ck_assert(!!x);
+	ck_assert(!strcmp(x, ab));
+	free(x);
+}
+
+#define TEST_CAT(_a, _b) test_cat((_a), (_b), (_a _b));
+
+START_TEST(test_util_str_cat)
+{
+	TEST_CAT("a", "b");
+	TEST_CAT("", "b");
+	TEST_CAT("a", "");
+	TEST_CAT("STH", "MORE");
+	test_cat(NULL, "b", "b");
+	test_cat("a", NULL, "a");
+	test_cat(NULL, NULL, "");
+}
+END_TEST
+
+#define TEST_JOIN(_res, ...) ({ \
+		char *x; \
+		x = shl_strjoin(__VA_ARGS__); \
+		ck_assert(!!x); \
+		ck_assert(!strcmp(x, (_res))); \
+		free(x); \
+	})
+
+START_TEST(test_util_str_join)
+{
+	TEST_JOIN("", NULL);
+	TEST_JOIN("a", "a", NULL);
+	TEST_JOIN("abc", "a", "b", "c", NULL);
+	TEST_JOIN("abc", "", "a", "", "b", "", "c", "", NULL);
+	TEST_JOIN("aasdfb", "a", "asdf", "b", NULL);
+	TEST_JOIN("asdfb", "asdf", "b", NULL);
+}
+END_TEST
+
 TEST_DEFINE_CASE(atoi)
 	TEST(test_util_atoi_ctoi)
 	TEST(test_util_atoi_base)
 	TEST(test_util_atoi_types)
 TEST_END_CASE
 
+TEST_DEFINE_CASE(str)
+	TEST(test_util_str_cat)
+	TEST(test_util_str_join)
+TEST_END_CASE
+
 TEST_DEFINE(
 	TEST_SUITE(util,
 		TEST_CASE(atoi),
+		TEST_CASE(str),
 		TEST_END
 	)
 )

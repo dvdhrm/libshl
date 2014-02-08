@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include "shl_macro.h"
@@ -257,4 +258,66 @@ void *shl_greedy_realloc0(void **mem, size_t *size, size_t need)
 		shl_memzero(&p[prev], *size - prev);
 
 	return p;
+}
+
+/*
+ * String Helpers
+ */
+
+char *shl_strcat(const char *first, const char *second)
+{
+	size_t flen, slen;
+	char *str;
+
+	if (!first)
+		first = "";
+	if (!second)
+		second = "";
+
+	flen = strlen(first);
+	slen = strlen(second);
+	if (flen + slen + 1 <= flen)
+		return NULL;
+
+	str = malloc(flen + slen + 1);
+	if (!str)
+		return NULL;
+
+	strcpy(str, first);
+	strcpy(&str[flen], second);
+
+	return str;
+}
+
+char *shl_strjoin(const char *first, ...) {
+	va_list args;
+	size_t len, l;
+	const char *arg;
+	char *str, *p;
+
+	va_start(args, first);
+
+	for (arg = first, len = 0; arg; arg = va_arg(args, const char*)) {
+		l = strlen(arg);
+		if (len + l < len)
+			return NULL;
+
+		len += l;
+	}
+
+	va_end(args);
+
+	str = malloc(len + 1);
+	if (!str)
+		return NULL;
+
+	va_start(args, first);
+
+	for (arg = first, p = str; arg; arg = va_arg(args, const char*))
+		p = stpcpy(p, arg);
+
+	va_end(args);
+
+	*p = 0;
+	return str;
 }
