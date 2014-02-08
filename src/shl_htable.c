@@ -400,6 +400,16 @@ bool shl_htable_remove(struct shl_htable *htable, const void *obj, size_t hash,
  * Helpers
  */
 
+bool shl_htable_compare_uint(const void *a, const void *b)
+{
+	return *(const unsigned int*)a == *(const unsigned int*)b;
+}
+
+size_t shl_htable_rehash_uint(const void *elem, void *priv)
+{
+	return (size_t)*(const unsigned int*)elem;
+}
+
 bool shl_htable_compare_ulong(const void *a, const void *b)
 {
 	return *(const unsigned long*)a == *(const unsigned long*)b;

@@ -84,6 +84,64 @@ int shl_htable_insert(struct shl_htable *htable, const void *obj, size_t hash);
 bool shl_htable_remove(struct shl_htable *htable, const void *obj, size_t hash,
 		       void **out);
 
+/* uint htables */
+
+#if SIZE_MAX < UINT_MAX
+#  error "'size_t' is smaller than 'unsigned int'"
+#endif
+
+bool shl_htable_compare_uint(const void *a, const void *b);
+size_t shl_htable_rehash_uint(const void *elem, void *priv);
+
+#define SHL_HTABLE_INIT_UINT(_obj)					\
+	SHL_HTABLE_INIT((_obj), shl_htable_compare_uint,		\
+				shl_htable_rehash_uint,			\
+				NULL)
+
+static inline void shl_htable_init_uint(struct shl_htable *htable)
+{
+	shl_htable_init(htable, shl_htable_compare_uint,
+			shl_htable_rehash_uint, NULL);
+}
+
+static inline void shl_htable_clear_uint(struct shl_htable *htable,
+					 void (*cb) (unsigned int *elem,
+					             void *ctx),
+					 void *ctx)
+{
+	shl_htable_clear(htable, (void (*) (void*, void*))cb, ctx);
+}
+
+static inline void shl_htable_visit_uint(struct shl_htable *htable,
+					 void (*cb) (unsigned int *elem,
+					             void *ctx),
+					 void *ctx)
+{
+	shl_htable_visit(htable, (void (*) (void*, void*))cb, ctx);
+}
+
+static inline bool shl_htable_lookup_uint(struct shl_htable *htable,
+					  unsigned int key,
+					  unsigned int **out)
+{
+	return shl_htable_lookup(htable, (const void*)&key, (size_t)key,
+				 (void**)out);
+}
+
+static inline int shl_htable_insert_uint(struct shl_htable *htable,
+					 const unsigned int *key)
+{
+	return shl_htable_insert(htable, (const void*)key, (size_t)*key);
+}
+
+static inline bool shl_htable_remove_uint(struct shl_htable *htable,
+					  unsigned int key,
+					  unsigned int **out)
+{
+	return shl_htable_remove(htable, (const void*)&key, (size_t)key,
+				 (void**)out);
+}
+
 /* ulong htables */
 
 #if SIZE_MAX < ULONG_MAX
