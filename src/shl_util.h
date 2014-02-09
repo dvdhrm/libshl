@@ -85,4 +85,12 @@ void *shl_greedy_realloc0(void **mem, size_t *size, size_t need);
 char *shl_strcat(const char *first, const char *second);
 char *shl_strjoin(const char *first, ...);
 
+static inline char *shl_startswith(const char *str, const char *prefix)
+{
+	if (!strncmp(str, prefix, strlen(prefix)))
+		return (char*)str + strlen(prefix);
+	else
+		return NULL;
+}
+
 #endif  /* SHL_UTIL_H */

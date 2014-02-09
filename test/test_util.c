@@ -130,6 +130,12 @@ START_TEST(test_util_atoi_types)
 }
 END_TEST
 
+TEST_DEFINE_CASE(atoi)
+	TEST(test_util_atoi_ctoi)
+	TEST(test_util_atoi_base)
+	TEST(test_util_atoi_types)
+TEST_END_CASE
+
 static void test_cat(const char *a, const char *b, const char *ab)
 {
 	char *x;
@@ -173,15 +179,22 @@ START_TEST(test_util_str_join)
 }
 END_TEST
 
-TEST_DEFINE_CASE(atoi)
-	TEST(test_util_atoi_ctoi)
-	TEST(test_util_atoi_base)
-	TEST(test_util_atoi_types)
-TEST_END_CASE
+START_TEST(test_util_str_startswith)
+{
+	ck_assert(!!shl_startswith("", ""));
+	ck_assert(!!shl_startswith("asdf", "asdf"));
+	ck_assert(!!shl_startswith("asdf", "asd"));
+	ck_assert(!!shl_startswith("asdf", ""));
+	ck_assert(!shl_startswith("asdf", "asdfg"));
+	ck_assert(!shl_startswith("asdf", " asdf"));
+	ck_assert(!shl_startswith(" asdf", "asdf"));
+}
+END_TEST
 
 TEST_DEFINE_CASE(str)
 	TEST(test_util_str_cat)
 	TEST(test_util_str_join)
+	TEST(test_util_str_startswith)
 TEST_END_CASE
 
 TEST_DEFINE(
