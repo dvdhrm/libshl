@@ -56,7 +56,7 @@ START_TEST(test_htable_str)
 {
 	struct node *iter;
 	int r, i, num;
-	char **k;
+	char **k, *v;
 	bool b;
 
 	/* insert once, remove once, try removing again */
@@ -230,6 +230,29 @@ START_TEST(test_htable_str)
 		++num;
 	}
 	ck_assert(num == 8);
+
+	num = 0;
+	shl_htable_clear_str(&ht, test_htable_str_cb, &num);
+	ck_assert(num == 0);
+
+	/* test NULL strings; add twice, remove twice */
+
+	v = NULL;
+	r = shl_htable_insert_str(&ht, &v, NULL);
+	ck_assert(!r);
+
+	r = shl_htable_insert_str(&ht, &v, NULL);
+	ck_assert(!r);
+
+	b = shl_htable_remove_str(&ht, NULL, NULL, &k);
+	ck_assert(b);
+	ck_assert(k != NULL);
+	ck_assert(k == &v);
+
+	b = shl_htable_remove_str(&ht, NULL, NULL, &k);
+	ck_assert(b);
+	ck_assert(k != NULL);
+	ck_assert(k == &v);
 
 	num = 0;
 	shl_htable_clear_str(&ht, test_htable_str_cb, &num);

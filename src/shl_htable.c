@@ -445,7 +445,10 @@ size_t shl_htable_rehash_ulong(const void *elem, void *priv)
 
 bool shl_htable_compare_str(const void *a, const void *b)
 {
-	return !strcmp(*(char**)a, *(char**)b);
+	if (!*(char**)a || !*(char**)b)
+		return *(char**)a == *(char**)b;
+	else
+		return !strcmp(*(char**)a, *(char**)b);
 }
 
 /* DJB's hash function */
@@ -454,7 +457,7 @@ size_t shl_htable_rehash_str(const void *elem, void *priv)
 	const char *str = *(char**)elem;
 	size_t hash = 5381;
 
-	for ( ; *str; ++str)
+	for ( ; str && *str; ++str)
 		hash = (hash << 5) + hash + (size_t)*str;
 
 	return hash;
