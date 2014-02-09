@@ -100,6 +100,14 @@ void *shl_htable_get_entry(struct shl_htable *htable, size_t i);
 		htable__i = shl_htable_this_or_next((_ht), htable__i + 1) \
 	)
 
+#define SHL_HTABLE_FIRST(_ht) \
+	shl_htable_get_entry((_ht), shl_htable_this_or_next((_ht), 0))
+
+#define SHL_HTABLE_FIRST_MACRO(_ht, _accessor) ({ \
+		void *htable__i = shl_htable_get_entry((_ht), \
+					shl_htable_this_or_next((_ht), 0)); \
+		htable__i ? _accessor(htable__i) : NULL; })
+
 /* uint htables */
 
 #if SIZE_MAX < UINT_MAX

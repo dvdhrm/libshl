@@ -41,6 +41,9 @@ static struct node o[] = {
 #define TEST_FOREACH_STR(_iter, _ht) \
 	SHL_HTABLE_FOREACH_MACRO(_iter, (_ht), to_node)
 
+#define TEST_FIRST_STR(_ht) \
+	SHL_HTABLE_FIRST_MACRO((_ht), to_node)
+
 static void test_htable_str_cb(char **k, void *ctx)
 {
 	int *num = ctx;
@@ -202,6 +205,35 @@ START_TEST(test_htable_str)
 	num = 0;
 	shl_htable_clear_str(&ht, test_htable_str_cb, &num);
 	ck_assert(num == 8);
+
+	/* test SHL_HTABLE_FIRST() */
+
+	for (i = 0; i < 8; ++i) {
+		r = shl_htable_insert_str(&ht, &o[i].key, &o[i].hash);
+		ck_assert(!r);
+	}
+
+	num = 0;
+	shl_htable_visit_str(&ht, test_htable_str_cb, &num);
+	ck_assert(num == 8);
+
+	num = 0;
+	TEST_FOREACH_STR(iter, &ht) {
+		ck_assert(iter->v == iter->ul);
+		++num;
+	}
+	ck_assert(num == 8);
+
+	num = 0;
+	while ((iter = TEST_FIRST_STR(&ht))) {
+		shl_htable_remove_str(&ht, iter->key, NULL, NULL);
+		++num;
+	}
+	ck_assert(num == 8);
+
+	num = 0;
+	shl_htable_clear_str(&ht, test_htable_str_cb, &num);
+	ck_assert(num == 0);
 }
 END_TEST
 
