@@ -191,10 +191,76 @@ START_TEST(test_util_str_startswith)
 }
 END_TEST
 
+START_TEST(test_util_str_qstr)
+{
+	int r;
+	char **strv;
+
+	r = shl_qstr_tokenize("", &strv);
+	ck_assert(r == 0);
+	ck_assert(strv && !*strv);
+	shl_strv_free(strv);
+
+	r = shl_qstr_tokenize(NULL, &strv);
+	ck_assert(r == 0);
+	ck_assert(strv && !*strv);
+	shl_strv_free(strv);
+
+	r = shl_qstr_tokenize("foo", &strv);
+	ck_assert(r == 1);
+	ck_assert(strv && !strcmp(*strv, "foo") && !strv[1]);
+	shl_strv_free(strv);
+
+	r = shl_qstr_tokenize("''", &strv);
+	ck_assert(r == 1);
+	ck_assert(strv && !strcmp(*strv, "") && !strv[1]);
+	shl_strv_free(strv);
+
+	r = shl_qstr_tokenize("foo bar", &strv);
+	ck_assert(r == 2);
+	ck_assert(strv &&
+		  !strcmp(strv[0], "foo") &&
+		  !strcmp(strv[1], "bar") &&
+		  !strv[2]);
+	shl_strv_free(strv);
+
+	r = shl_qstr_tokenize("more foo bar entries", &strv);
+	ck_assert(r == 4);
+	ck_assert(strv &&
+		  !strcmp(strv[0], "more") &&
+		  !strcmp(strv[1], "foo") &&
+		  !strcmp(strv[2], "bar") &&
+		  !strcmp(strv[3], "entries") &&
+		  !strv[4]);
+	shl_strv_free(strv);
+
+	r = shl_qstr_tokenize("\"mo\"re f''oo bar'' 'entries'", &strv);
+	ck_assert(r == 4);
+	ck_assert(strv &&
+		  !strcmp(strv[0], "more") &&
+		  !strcmp(strv[1], "foo") &&
+		  !strcmp(strv[2], "bar") &&
+		  !strcmp(strv[3], "entries") &&
+		  !strv[4]);
+	shl_strv_free(strv);
+
+	r = shl_qstr_tokenize("\"\\\"'mo\"re f'\"'oo bar'' 'en\\ntries'\\", &strv);
+	ck_assert(r == 4);
+	ck_assert(strv &&
+		  !strcmp(strv[0], "\"'more") &&
+		  !strcmp(strv[1], "f\"oo") &&
+		  !strcmp(strv[2], "bar") &&
+		  !strcmp(strv[3], "en\ntries\\") &&
+		  !strv[4]);
+	shl_strv_free(strv);
+}
+END_TEST
+
 TEST_DEFINE_CASE(str)
 	TEST(test_util_str_cat)
 	TEST(test_util_str_join)
 	TEST(test_util_str_startswith)
+	TEST(test_util_str_qstr)
 TEST_END_CASE
 
 TEST_DEFINE(

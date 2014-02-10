@@ -93,4 +93,15 @@ static inline char *shl_startswith(const char *str, const char *prefix)
 		return NULL;
 }
 
+/* strv */
+
+void shl_strv_free(char **strv);
+
+/* quoted strings */
+
+char shl_qstr_unescape_char(char c);
+void shl_qstr_decode_n(char *str, size_t length);
+int shl_qstr_tokenize_n(const char *str, size_t length, char ***out);
+int shl_qstr_tokenize(const char *str, char ***out);
+
 #endif  /* SHL_UTIL_H */
