@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include "shl_macro.h"
 
 /* strict atoi */
 
@@ -96,6 +97,13 @@ static inline char *shl_startswith(const char *str, const char *prefix)
 /* strv */
 
 void shl_strv_free(char **strv);
+
+static inline void shl_strv_freep(char ***strv)
+{
+	shl_strv_free(*strv);
+}
+
+#define _shl_cleanup_strv_ _shl_cleanup_(shl_strv_freep)
 
 /* quoted strings */
 
