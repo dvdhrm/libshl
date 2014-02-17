@@ -170,7 +170,7 @@ END_TEST
 
 START_TEST(test_util_str_join)
 {
-	TEST_JOIN("", NULL);
+	TEST_JOIN("", NULL, NULL);
 	TEST_JOIN("a", "a", NULL);
 	TEST_JOIN("abc", "a", "b", "c", NULL);
 	TEST_JOIN("abc", "", "a", "", "b", "", "c", "", NULL);
