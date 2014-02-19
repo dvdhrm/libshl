@@ -17,7 +17,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/types.h>
+#include <time.h>
 #include "shl_macro.h"
 #include "shl_util.h"
 
@@ -644,4 +646,18 @@ int shl_mkdir_p(const char *path, mode_t mode)
 int shl_mkdir_p_prefix(const char *prefix, const char *path, mode_t mode)
 {
 	return shl__mkdir_p(prefix, path, mode);
+}
+
+/*
+ * Time
+ */
+
+uint64_t shl_now(clockid_t clock)
+{
+	struct timespec ts;
+
+	clock_gettime(clock, &ts);
+
+	return (uint64_t)ts.tv_sec * 1000000LL +
+	       (uint64_t)ts.tv_nsec / 1000LL;
 }

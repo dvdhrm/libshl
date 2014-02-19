@@ -118,4 +118,8 @@ int shl_qstr_tokenize(const char *str, char ***out);
 int shl_mkdir_p(const char *path, mode_t mode);
 int shl_mkdir_p_prefix(const char *prefix, const char *path, mode_t mode);
 
+/* time */
+
+uint64_t shl_now(clockid_t clock);
+
 #endif  /* SHL_UTIL_H */
