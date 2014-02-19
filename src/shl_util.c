@@ -661,3 +661,33 @@ uint64_t shl_now(clockid_t clock)
 	return (uint64_t)ts.tv_sec * 1000000LL +
 	       (uint64_t)ts.tv_nsec / 1000LL;
 }
+
+/*
+ * Ratelimit
+ * Modelled after Linux' lib/ratelimit.c by Dave Young
+ * <hidave.darkstar@gmail.com>, which is licensed GPLv2.
+ */
+
+bool shl_ratelimit_test(struct shl_ratelimit *r)
+{
+	uint64_t ts;
+
+	if (!r || r->interval <= 0 || r->burst <= 0)
+		return true;
+
+	ts = shl_now(CLOCK_MONOTONIC);
+
+	if (r->begin <= 0 || r->begin + r->interval < ts) {
+		r->begin = ts;
+		r->num = 0;
+		goto good;
+	} else if (r->num < r->burst) {
+		goto good;
+	}
+
+	return false;
+
+good:
+	++r->num;
+	return true;
+}

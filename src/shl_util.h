@@ -122,4 +122,32 @@ int shl_mkdir_p_prefix(const char *prefix, const char *path, mode_t mode);
 
 uint64_t shl_now(clockid_t clock);
 
+/* ratelimit */
+
+struct shl_ratelimit {
+	uint64_t interval;
+	uint64_t begin;
+	unsigned burst;
+	unsigned num;
+};
+
+#define SHL_RATELIMIT_DEFINE(_name, _interval, _burst) \
+	struct shl_ratelimit _name = { (_interval), (_burst), 0, 0 }
+
+#define SHL_RATELIMIT_INIT(_v, _interval, _burst) do { \
+		struct shl_ratelimit *_r = &(_v); \
+		_r->interval = (_interval); \
+		_r->burst = (_burst); \
+		_r->num = 0; \
+		_r->begin = 0; \
+	} while (false)
+
+#define SHL_RATELIMIT_RESET(_v) do { \
+		struct shl_ratelimit *_r = &(_v); \
+		_r->num = 0; \
+		_r->begin = 0; \
+	} while (false)
+
+bool shl_ratelimit_test(struct shl_ratelimit *r);
+
 #endif  /* SHL_UTIL_H */
