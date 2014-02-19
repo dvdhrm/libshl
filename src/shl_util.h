@@ -17,6 +17,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include "shl_macro.h"
 
 /* strict atoi */
@@ -111,5 +112,10 @@ char shl_qstr_unescape_char(char c);
 void shl_qstr_decode_n(char *str, size_t length);
 int shl_qstr_tokenize_n(const char *str, size_t length, char ***out);
 int shl_qstr_tokenize(const char *str, char ***out);
+
+/* mkdir */
+
+int shl_mkdir_p(const char *path, mode_t mode);
+int shl_mkdir_p_prefix(const char *prefix, const char *path, mode_t mode);
 
 #endif  /* SHL_UTIL_H */

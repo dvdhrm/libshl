@@ -16,6 +16,8 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "shl_macro.h"
 #include "shl_util.h"
 
@@ -529,4 +531,117 @@ error:
 int shl_qstr_tokenize(const char *str, char ***out)
 {
 	return shl_qstr_tokenize_n(str, str ? strlen(str) : 0, out);
+}
+
+/*
+ * mkdir
+ */
+
+static int shl__is_dir(const char *path)
+{
+	struct stat st;
+
+	if (stat(path, &st) < 0)
+		return -errno;
+
+	return S_ISDIR(st.st_mode);
+}
+
+const char *shl__path_startswith(const char *path, const char *prefix)
+{
+	size_t pathl, prefixl;
+
+	if (!path)
+		return NULL;
+	if (!prefix)
+		return path;
+
+	if ((path[0] == '/') != (prefix[0] == '/'))
+		return NULL;
+
+	/* compare all components */
+	while (true) {
+		path += strspn(path, "/");
+		prefix += strspn(prefix, "/");
+
+		if (*prefix == 0)
+			return (char*)path;
+		if (*path == 0)
+			return NULL;
+
+		pathl = strcspn(path, "/");
+		prefixl = strcspn(prefix, "/");
+		if (pathl != prefixl || memcmp(path, prefix, pathl))
+			return NULL;
+
+		path += pathl;
+		prefix += prefixl;
+	}
+}
+
+int shl__mkdir_parents(const char *prefix, const char *path, mode_t mode)
+{
+	const char *p, *e;
+	char *t;
+	int r;
+
+	if (!shl__path_startswith(path, prefix))
+		return -ENOTDIR;
+
+	e = strrchr(path, '/');
+	if (!e || e == path)
+		return 0;
+
+	p = strndupa(path, e - path);
+	r = shl__is_dir(p);
+	if (r > 0)
+		return 0;
+	if (r == 0)
+		return -ENOTDIR;
+
+	t = alloca(strlen(path) + 1);
+	p = path + strspn(path, "/");
+
+	while (true) {
+		e = p + strcspn(p, "/");
+		p = e + strspn(e, "/");
+
+		if (*p == 0)
+			return 0;
+
+		memcpy(t, path, e - path);
+		t[e - path] = 0;
+
+		if (prefix && shl__path_startswith(prefix, t))
+			continue;
+
+		r = mkdir(t, mode);
+		if (r < 0 && errno != EEXIST)
+			return -errno;
+	}
+}
+
+static int shl__mkdir_p(const char *prefix, const char *path, mode_t mode)
+{
+	int r;
+
+	r = shl__mkdir_parents(prefix, path, mode);
+	if (r < 0)
+		return r;
+
+	r = mkdir(path, mode);
+	if (r < 0 && (errno != EEXIST || shl__is_dir(path) <= 0))
+		return -errno;
+
+	return 0;
+}
+
+int shl_mkdir_p(const char *path, mode_t mode)
+{
+	return shl__mkdir_p(NULL, path, mode);
+}
+
+int shl_mkdir_p_prefix(const char *prefix, const char *path, mode_t mode)
+{
+	return shl__mkdir_p(prefix, path, mode);
 }
