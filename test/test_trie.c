@@ -175,6 +175,9 @@ START_TEST(test_trie_add_many)
 		r = shl_trie_lookup_str(&t, u[i], NULL);
 		ck_assert(!r);
 	}
+
+	shl_trie_clear(&t, NULL, NULL);
+	ck_assert(t.root == 0);
 }
 END_TEST
 
