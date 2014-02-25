@@ -119,6 +119,7 @@ char shl_qstr_unescape_char(char c);
 void shl_qstr_decode_n(char *str, size_t length);
 int shl_qstr_tokenize_n(const char *str, size_t length, char ***out);
 int shl_qstr_tokenize(const char *str, char ***out);
+int shl_qstr_join(char **strv, char **out);
 
 /* mkdir */
 

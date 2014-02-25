@@ -194,7 +194,7 @@ END_TEST
 START_TEST(test_util_str_qstr)
 {
 	int r;
-	char **strv;
+	char **strv, *t;
 
 	r = shl_qstr_tokenize("", &strv);
 	ck_assert(r == 0);
@@ -253,6 +253,26 @@ START_TEST(test_util_str_qstr)
 		  !strcmp(strv[3], "en\ntries\\") &&
 		  !strv[4]);
 	shl_strv_free(strv);
+
+	r = shl_qstr_join((char*[]){ NULL }, &t);
+	ck_assert(r == 0);
+	ck_assert(!strcmp(t, ""));
+	free(t);
+
+	r = shl_qstr_join((char*[]){ "asdf", NULL }, &t);
+	ck_assert(r == 4);
+	ck_assert(!strcmp(t, "asdf"));
+	free(t);
+
+	r = shl_qstr_join((char*[]){ "as df", "buhu", "  ", "yeha\\", NULL }, &t);
+	ck_assert(r == 24);
+	ck_assert_str_eq(t, "\"as df\" buhu \"  \" yeha\\\\");
+	free(t);
+
+	r = shl_qstr_join((char*[]){ "as\tdf", "buhu", "\n", NULL }, &t);
+	ck_assert_int_eq(r, 16);
+	ck_assert_str_eq(t, "\"as\tdf\" buhu \"\n\"");
+	free(t);
 }
 END_TEST
 

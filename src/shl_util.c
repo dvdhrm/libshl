@@ -573,6 +573,104 @@ int shl_qstr_tokenize(const char *str, char ***out)
 	return shl_qstr_tokenize_n(str, str ? strlen(str) : 0, out);
 }
 
+size_t shl__qstr_encode(char *dst, const char *src, bool need_quote)
+{
+	size_t l = 0;
+
+	if (need_quote)
+		dst[l++] = '"';
+
+	for ( ; *src; ++src) {
+		switch (*src) {
+		case '\\':
+		case '\"':
+			dst[l++] = '\\';
+			dst[l++] = *src;
+			break;
+		default:
+			dst[l++] = *src;
+			break;
+		}
+	}
+
+	if (need_quote)
+		dst[l++] = '"';
+
+	return l;
+}
+
+size_t shl__qstr_length(const char *str, bool *need_quote)
+{
+	size_t l = 0;
+
+	*need_quote = false;
+
+	do {
+		switch (*str++) {
+		case 0:
+			return l;
+		case ' ':
+		case '\t':
+		case '\n':
+		case '\v':
+			*need_quote = true;
+		}
+	} while (++l);
+
+	return l - 1;
+}
+
+int shl_qstr_join(char **strv, char **out)
+{
+	_shl_cleanup_free_ char *line = NULL;
+	size_t len, size, l, need;
+	bool need_quote;
+
+	len = 0;
+	size = 0;
+
+	if (!SHL_GREEDY_REALLOC_T(line, size, 1))
+		return -ENOMEM;
+
+	*line = 0;
+
+	for ( ; *strv; ++strv) {
+		l = shl__qstr_length(*strv, &need_quote);
+
+		/* at most 2 byte per char (escapes) */
+		if (l * 2 < l)
+			return -ENOMEM;
+		need = l * 2;
+
+		/* on top of current length */
+		if (need + len < need)
+			return -ENOMEM;
+		need += len;
+
+		/* at most 4 extra chars: 2 quotes + 0 + separator */
+		if (need + 4 < len)
+			return -ENOMEM;
+		need += 4;
+
+		/* make sure line is big enough */
+		if (!SHL_GREEDY_REALLOC_T(line, size, need))
+			return -ENOMEM;
+
+		if (len)
+			line[len++] = ' ';
+
+		len += shl__qstr_encode(line + len, *strv, need_quote);
+	}
+
+	if ((size_t)(int)len != len)
+		return -ENOMEM;
+
+	line[len] = 0;
+	*out = line;
+	line = NULL;
+	return len;
+}
+
 /*
  * mkdir
  */
