@@ -263,10 +263,44 @@ TEST_DEFINE_CASE(str)
 	TEST(test_util_str_qstr)
 TEST_END_CASE
 
+START_TEST(test_misc_greedy_alloc)
+{
+	static uint64_t zero[1000 * 1000];
+	uint64_t *arr;
+	size_t cnt;
+
+	arr = NULL;
+	cnt = 0;
+
+	ck_assert_ptr_ne(SHL_GREEDY_REALLOC0_T(arr, cnt, 10), NULL);
+	ck_assert_int_ge(cnt, 10);
+	ck_assert(!memcmp(arr, zero, 10 * sizeof(*arr)));
+
+	ck_assert_ptr_ne(SHL_GREEDY_REALLOC0_T(arr, cnt, 100), NULL);
+	ck_assert_int_ge(cnt, 100);
+	ck_assert(!memcmp(arr, zero, 100 * sizeof(*arr)));
+
+	ck_assert_ptr_ne(SHL_GREEDY_REALLOC0_T(arr, cnt, 1000), NULL);
+	ck_assert_int_ge(cnt, 1000);
+	ck_assert(!memcmp(arr, zero, 1000 * sizeof(*arr)));
+
+	ck_assert_ptr_ne(SHL_GREEDY_REALLOC0_T(arr, cnt, 10000), NULL);
+	ck_assert_int_ge(cnt, 10000);
+	ck_assert(!memcmp(arr, zero, 10000 * sizeof(*arr)));
+
+	free(arr);
+}
+END_TEST
+
+TEST_DEFINE_CASE(misc)
+	TEST(test_misc_greedy_alloc)
+TEST_END_CASE
+
 TEST_DEFINE(
 	TEST_SUITE(util,
 		TEST_CASE(atoi),
 		TEST_CASE(str),
+		TEST_CASE(misc),
 		TEST_END
 	)
 )
