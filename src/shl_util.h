@@ -85,9 +85,9 @@ void *shl_greedy_realloc_t(void **arr, size_t *cnt, size_t need, size_t ts);
 void *shl_greedy_realloc0_t(void **arr, size_t *cnt, size_t need, size_t ts);
 
 #define SHL_GREEDY_REALLOC_T(array, count, need) \
-	shl_greedy_realloc_t(&(array), &count, need, sizeof(*(array)))
+	shl_greedy_realloc_t((void**)&(array), &count, need, sizeof(*(array)))
 #define SHL_GREEDY_REALLOC0_T(array, count, need) \
-	shl_greedy_realloc0_t(&(array), &count, need, sizeof(*(array)))
+	shl_greedy_realloc0_t((void**)&(array), &count, need, sizeof(*(array)))
 
 /* string helpers */
 
