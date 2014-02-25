@@ -297,7 +297,7 @@ void *shl_greedy_realloc0_t(void **arr, size_t *cnt, size_t need, size_t ts)
 		return NULL;
 
 	if (*cnt > prev)
-		shl_memzero(&p[prev], (*cnt - prev) * ts);
+		shl_memzero(&p[prev * ts], (*cnt - prev) * ts);
 
 	return p;
 }
