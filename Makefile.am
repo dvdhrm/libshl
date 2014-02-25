@@ -145,17 +145,17 @@ libshl_la_LIBADD = $(AM_LIBADD)
 #
 
 tests = \
-	test_githead \
-	test_trie \
-	test_dlist \
-	test_htable \
-	test_edbus \
-	test_pty \
-	test_log \
-	test_llog \
-	test_ring \
 	test_buf \
+	test_dlist \
+	test_edbus \
+	test_githead \
+	test_htable \
+	test_llog \
+	test_log \
 	test_macro \
+	test_pty \
+	test_ring \
+	test_trie \
 	test_util
 
 if BUILD_HAVE_CHECK
@@ -174,60 +174,60 @@ test_cflags = \
 test_lflags = \
 	$(AM_LDFLAGS)
 
-test_githead_SOURCES = test/test_githead.c $(test_sources)
-test_githead_CPPFLAGS = $(test_cflags)
-test_githead_LDADD = $(test_libs)
-test_githead_LDFLAGS = $(test_lflags)
-
-test_trie_SOURCES = test/test_trie.c $(test_sources)
-test_trie_CPPFLAGS = $(test_cflags)
-test_trie_LDADD = $(test_libs)
-test_trie_LDFLAGS = $(test_lflags)
+test_buf_SOURCES = test/test_buf.c $(test_sources)
+test_buf_CPPFLAGS = $(test_cflags)
+test_buf_LDADD = $(test_libs)
+test_buf_LDFLAGS = $(test_lflags)
 
 test_dlist_SOURCES = test/test_dlist.c $(test_sources)
 test_dlist_CPPFLAGS = $(test_cflags)
 test_dlist_LDADD = $(test_libs)
 test_dlist_LDFLAGS = $(test_lflags)
 
-test_htable_SOURCES = test/test_htable.c $(test_sources)
-test_htable_CPPFLAGS = $(test_cflags)
-test_htable_LDADD = $(test_libs)
-test_htable_LDFLAGS = $(test_lflags)
-
 test_edbus_SOURCES = test/test_edbus.c $(test_sources)
 test_edbus_CPPFLAGS = $(test_cflags)
 test_edbus_LDADD = $(test_libs)
 test_edbus_LDFLAGS = $(test_lflags)
 
-test_pty_SOURCES = test/test_pty.c $(test_sources)
-test_pty_CPPFLAGS = $(test_cflags)
-test_pty_LDADD = $(test_libs)
-test_pty_LDFLAGS = $(test_lflags)
+test_githead_SOURCES = test/test_githead.c $(test_sources)
+test_githead_CPPFLAGS = $(test_cflags)
+test_githead_LDADD = $(test_libs)
+test_githead_LDFLAGS = $(test_lflags)
 
-test_log_SOURCES = test/test_log.c $(test_sources)
-test_log_CPPFLAGS = $(test_cflags)
-test_log_LDADD = $(test_libs)
-test_log_LDFLAGS = $(test_lflags)
+test_htable_SOURCES = test/test_htable.c $(test_sources)
+test_htable_CPPFLAGS = $(test_cflags)
+test_htable_LDADD = $(test_libs)
+test_htable_LDFLAGS = $(test_lflags)
 
 test_llog_SOURCES = test/test_llog.c $(test_sources)
 test_llog_CPPFLAGS = $(test_cflags)
 test_llog_LDADD = $(test_libs)
 test_llog_LDFLAGS = $(test_lflags)
 
-test_ring_SOURCES = test/test_ring.c $(test_sources)
-test_ring_CPPFLAGS = $(test_cflags)
-test_ring_LDADD = $(test_libs)
-test_ring_LDFLAGS = $(test_lflags)
-
-test_buf_SOURCES = test/test_buf.c $(test_sources)
-test_buf_CPPFLAGS = $(test_cflags)
-test_buf_LDADD = $(test_libs)
-test_buf_LDFLAGS = $(test_lflags)
+test_log_SOURCES = test/test_log.c $(test_sources)
+test_log_CPPFLAGS = $(test_cflags)
+test_log_LDADD = $(test_libs)
+test_log_LDFLAGS = $(test_lflags)
 
 test_macro_SOURCES = test/test_macro.c $(test_sources)
 test_macro_CPPFLAGS = $(test_cflags)
 test_macro_LDADD = $(test_libs)
 test_macro_LDFLAGS = $(test_lflags)
+
+test_pty_SOURCES = test/test_pty.c $(test_sources)
+test_pty_CPPFLAGS = $(test_cflags)
+test_pty_LDADD = $(test_libs)
+test_pty_LDFLAGS = $(test_lflags)
+
+test_ring_SOURCES = test/test_ring.c $(test_sources)
+test_ring_CPPFLAGS = $(test_cflags)
+test_ring_LDADD = $(test_libs)
+test_ring_LDFLAGS = $(test_lflags)
+
+test_trie_SOURCES = test/test_trie.c $(test_sources)
+test_trie_CPPFLAGS = $(test_cflags)
+test_trie_LDADD = $(test_libs)
+test_trie_LDFLAGS = $(test_lflags)
 
 test_util_SOURCES = test/test_util.c $(test_sources)
 test_util_CPPFLAGS = $(test_cflags)
