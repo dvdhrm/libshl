@@ -264,6 +264,44 @@ void *shl_greedy_realloc0(void **mem, size_t *size, size_t need)
 	return p;
 }
 
+void *shl_greedy_realloc_t(void **arr, size_t *cnt, size_t need, size_t ts)
+{
+	size_t ncnt;
+	void *p;
+
+	if (*cnt >= need)
+		return *arr;
+	if (!ts)
+		return NULL;
+
+	ncnt = SHL_ALIGN_POWER2(shl_max_t(size_t, 64U, need));
+	if (ncnt == 0)
+		return NULL;
+
+	p = realloc(*arr, ncnt * ts);
+	if (!p)
+		return NULL;
+
+	*arr = p;
+	*cnt = ncnt;
+	return p;
+}
+
+void *shl_greedy_realloc0_t(void **arr, size_t *cnt, size_t need, size_t ts)
+{
+	size_t prev = *cnt;
+	uint8_t *p;
+
+	p = shl_greedy_realloc_t(arr, cnt, need, ts);
+	if (!p)
+		return NULL;
+
+	if (*cnt > prev)
+		shl_memzero(&p[prev], (*cnt - prev) * ts);
+
+	return p;
+}
+
 /*
  * String Helpers
  */

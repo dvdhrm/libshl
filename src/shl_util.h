@@ -81,6 +81,13 @@ static inline int shl_atoi_z(const char *str,
 
 void *shl_greedy_realloc(void **mem, size_t *size, size_t need);
 void *shl_greedy_realloc0(void **mem, size_t *size, size_t need);
+void *shl_greedy_realloc_t(void **arr, size_t *cnt, size_t need, size_t ts);
+void *shl_greedy_realloc0_t(void **arr, size_t *cnt, size_t need, size_t ts);
+
+#define SHL_GREEDY_REALLOC_T(array, count, need) \
+	shl_greedy_realloc_t(&(array), &count, need, sizeof(*(array)))
+#define SHL_GREEDY_REALLOC0_T(array, count, need) \
+	shl_greedy_realloc0_t(&(array), &count, need, sizeof(*(array)))
 
 /* string helpers */
 
