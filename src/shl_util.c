@@ -364,6 +364,102 @@ char *shl_strjoin(const char *first, ...) {
 	return str;
 }
 
+static int shl__split_push(char ***strv,
+			   size_t *strv_num,
+			   size_t *strv_size,
+			   const char *str,
+			   size_t len)
+{
+	size_t strv_need;
+	char *ns;
+
+	strv_need = (*strv_num + 2) * sizeof(**strv);
+	if (!shl_greedy_realloc0((void**)strv, strv_size, strv_need))
+		return -ENOMEM;
+
+	ns = malloc(len + 1);
+	memcpy(ns, str, len);
+	ns[len] = 0;
+
+	(*strv)[*strv_num] = ns;
+	*strv_num += 1;
+
+	return 0;
+}
+
+int shl_strsplit_n(const char *str, size_t len, const char *sep, char ***out)
+{
+	char **strv;
+	size_t i, j, strv_num, strv_size;
+	const char *pos;
+	int r;
+
+	if (!out || !sep)
+		return -EINVAL;
+	if (!str)
+		str = "";
+
+	strv_num = 0;
+	strv_size = sizeof(*strv);
+	strv = malloc(strv_size);
+	if (!strv)
+		return -ENOMEM;
+
+	pos = str;
+
+	for (i = 0; i < len; ++i) {
+		for (j = 0; sep[j]; ++j) {
+			if (str[i] != sep[j])
+				continue;
+
+			/* ignore empty tokens */
+			if (pos != &str[i]) {
+				r = shl__split_push(&strv,
+						    &strv_num,
+						    &strv_size,
+						    pos,
+						    &str[i] - pos);
+				if (r < 0)
+					goto error;
+			}
+
+			pos = &str[i + 1];
+			break;
+		}
+	}
+
+	/* copy trailing token if available */
+	if (i > 0 && pos != &str[i]) {
+		r = shl__split_push(&strv,
+				    &strv_num,
+				    &strv_size,
+				    pos,
+				    &str[i] - pos);
+		if (r < 0)
+			goto error;
+	}
+
+	if ((int)strv_num < (ssize_t)strv_num) {
+		r = -ENOMEM;
+		goto error;
+	}
+
+	strv[strv_num] = NULL;
+	*out = strv;
+	return strv_num;
+
+error:
+	for (i = 0; i < strv_num; ++i)
+		free(strv[i]);
+	free(strv);
+	return r;
+}
+
+int shl_strsplit(const char *str, const char *sep, char ***out)
+{
+	return shl_strsplit_n(str, str ? strlen(str) : 0, sep, out);
+}
+
 /*
  * strv
  */

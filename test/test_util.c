@@ -191,6 +191,68 @@ START_TEST(test_util_str_startswith)
 }
 END_TEST
 
+START_TEST(test_util_str_split)
+{
+	int r;
+	char **strv, *t;
+
+	r = shl_strsplit("", " \t\n", &strv);
+	ck_assert(r == 0);
+	ck_assert(strv && !*strv);
+	shl_strv_free(strv);
+
+	r = shl_strsplit("  \t\t\n   ", " \t\n", &strv);
+	ck_assert(r == 0);
+	ck_assert(strv && !*strv);
+	shl_strv_free(strv);
+
+	r = shl_strsplit(NULL, " \t\n", &strv);
+	ck_assert(r == 0);
+	ck_assert(strv && !*strv);
+	shl_strv_free(strv);
+
+	r = shl_strsplit("foo", " \t\n", &strv);
+	ck_assert(r == 1);
+	ck_assert(strv && !strcmp(*strv, "foo") && !strv[1]);
+	shl_strv_free(strv);
+
+	r = shl_strsplit("more foo bar entries", " ", &strv);
+	ck_assert(r == 4);
+	ck_assert(strv &&
+		  !strcmp(strv[0], "more") &&
+		  !strcmp(strv[1], "foo") &&
+		  !strcmp(strv[2], "bar") &&
+		  !strcmp(strv[3], "entries") &&
+		  !strv[4]);
+	shl_strv_free(strv);
+
+	r = shl_strsplit("more foo bar entries", "\r\n ", &strv);
+	ck_assert(r == 4);
+	ck_assert(strv &&
+		  !strcmp(strv[0], "more") &&
+		  !strcmp(strv[1], "foo") &&
+		  !strcmp(strv[2], "bar") &&
+		  !strcmp(strv[3], "entries") &&
+		  !strv[4]);
+	shl_strv_free(strv);
+
+	r = shl_strsplit("more foo bar entries", "\r\n", &strv);
+	ck_assert(r == 1);
+	ck_assert(strv && !strcmp(*strv, "more foo bar entries") && !strv[1]);
+	shl_strv_free(strv);
+
+	r = shl_strsplit("\r\r\rmore     foo\n\r\nbar \n\rentries\n\n", "\r\n ", &strv);
+	ck_assert(r == 4);
+	ck_assert(strv &&
+		  !strcmp(strv[0], "more") &&
+		  !strcmp(strv[1], "foo") &&
+		  !strcmp(strv[2], "bar") &&
+		  !strcmp(strv[3], "entries") &&
+		  !strv[4]);
+	shl_strv_free(strv);
+}
+END_TEST
+
 START_TEST(test_util_str_qstr)
 {
 	int r;
@@ -280,6 +342,7 @@ TEST_DEFINE_CASE(str)
 	TEST(test_util_str_cat)
 	TEST(test_util_str_join)
 	TEST(test_util_str_startswith)
+	TEST(test_util_str_split)
 	TEST(test_util_str_qstr)
 TEST_END_CASE
 
