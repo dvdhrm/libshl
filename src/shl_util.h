@@ -113,7 +113,7 @@ static inline void shl_strv_freep(char ***strv)
 	shl_strv_free(*strv);
 }
 
-#define _shl_cleanup_strv_ _shl_cleanup_(shl_strv_freep)
+#define _shl_strv_free_ _shl_cleanup_(shl_strv_freep)
 
 /* quoted strings */
 

@@ -718,7 +718,7 @@ size_t shl__qstr_length(const char *str, bool *need_quote)
 
 int shl_qstr_join(char **strv, char **out)
 {
-	_shl_cleanup_free_ char *line = NULL;
+	_shl_free_ char *line = NULL;
 	size_t len, size, l, need;
 	bool need_quote;
 
