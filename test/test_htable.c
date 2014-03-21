@@ -26,10 +26,10 @@ struct node {
 	size_t hash;
 };
 
-#define to_node(_key) shl_htable_offsetof((_key), struct node, key)
-#define ul_to_node(_key) shl_htable_offsetof((_key), struct node, ul)
-#define ui_to_node(_key) shl_htable_offsetof((_key), struct node, ui)
-#define u64_to_node(_key) shl_htable_offsetof((_key), struct node, u64)
+#define to_node(_key) shl_htable_entry((_key), struct node, key)
+#define ul_to_node(_key) shl_htable_entry((_key), struct node, ul)
+#define ui_to_node(_key) shl_htable_entry((_key), struct node, ui)
+#define u64_to_node(_key) shl_htable_entry((_key), struct node, u64)
 
 static struct node o[] = {
 	{ .v = 0, .key = "o0", .ul = 0, .ui = 0, .u64 = 0 },
