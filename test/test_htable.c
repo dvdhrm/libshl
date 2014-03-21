@@ -10,6 +10,7 @@
 static struct shl_htable ht = SHL_HTABLE_INIT_STR(ht);
 static struct shl_htable uht = SHL_HTABLE_INIT_ULONG(uht);
 static struct shl_htable iht = SHL_HTABLE_INIT_UINT(iht);
+static struct shl_htable u64ht = SHL_HTABLE_INIT_U64(u64ht);
 
 struct node {
 	char huge_padding[16384];
@@ -20,22 +21,25 @@ struct node {
 	char more_padding[32768];
 	unsigned int ui;
 	char more_padding2[32768];
+	uint64_t u64;
+	char more_padding3[32768];
 	size_t hash;
 };
 
 #define to_node(_key) shl_htable_offsetof((_key), struct node, key)
 #define ul_to_node(_key) shl_htable_offsetof((_key), struct node, ul)
 #define ui_to_node(_key) shl_htable_offsetof((_key), struct node, ui)
+#define u64_to_node(_key) shl_htable_offsetof((_key), struct node, u64)
 
 static struct node o[] = {
-	{ .v = 0, .key = "o0", .ul = 0, .ui = 0 },
-	{ .v = 1, .key = "o1", .ul = 1, .ui = 1 },
-	{ .v = 2, .key = "o2", .ul = 2, .ui = 2 },
-	{ .v = 3, .key = "o3", .ul = 3, .ui = 3 },
-	{ .v = 4, .key = "o4", .ul = 4, .ui = 4 },
-	{ .v = 5, .key = "o5", .ul = 5, .ui = 5 },
-	{ .v = 6, .key = "o6", .ul = 6, .ui = 6 },
-	{ .v = 7, .key = "o7", .ul = 7, .ui = 7 },
+	{ .v = 0, .key = "o0", .ul = 0, .ui = 0, .u64 = 0 },
+	{ .v = 1, .key = "o1", .ul = 1, .ui = 1, .u64 = 1 },
+	{ .v = 2, .key = "o2", .ul = 2, .ui = 2, .u64 = 2 },
+	{ .v = 3, .key = "o3", .ul = 3, .ui = 3, .u64 = 3 },
+	{ .v = 4, .key = "o4", .ul = 4, .ui = 4, .u64 = 4 },
+	{ .v = 5, .key = "o5", .ul = 5, .ui = 5, .u64 = 5 },
+	{ .v = 6, .key = "o6", .ul = 6, .ui = 6, .u64 = 6 },
+	{ .v = 7, .key = "o7", .ul = 7, .ui = 7, .u64 = 7 },
 };
 
 #define TEST_FOREACH_STR(_iter, _ht) \
@@ -452,10 +456,122 @@ START_TEST(test_htable_uint)
 }
 END_TEST
 
+static void test_htable_u64_cb(uint64_t *k, void *ctx)
+{
+	int *num = ctx;
+
+	ck_assert(u64_to_node(k)->v == u64_to_node(k)->u64);
+	++*num;
+}
+
+START_TEST(test_htable_u64)
+{
+	int r, i, num;
+	uint64_t *k, val;
+	bool b;
+
+	/* insert once, remove once, try removing again */
+
+	r = shl_htable_insert_u64(&u64ht, &o[0].u64);
+	ck_assert(!r);
+
+	b = shl_htable_remove_u64(&u64ht, o[0].u64, &k);
+	ck_assert(b);
+	ck_assert(k != NULL);
+	ck_assert(u64_to_node(k)->v == 0);
+
+	k = NULL;
+	b = shl_htable_remove_u64(&u64ht, o[0].u64, &k);
+	ck_assert(!b);
+	ck_assert(k == NULL);
+
+	/* insert all */
+
+	for (i = 0; i < 8; ++i) {
+		r = shl_htable_insert_u64(&u64ht, &o[i].u64);
+		ck_assert(!r);
+	}
+
+	/* verify */
+
+	for (i = 0; i < 8; ++i) {
+		k = NULL;
+		b = shl_htable_lookup_u64(&u64ht, o[i].u64, &k);
+		ck_assert(b);
+		ck_assert(k != NULL);
+	}
+
+	/* remove all elements again */
+
+	for (i = 0; i < 8; ++i) {
+		b = shl_htable_remove_u64(&u64ht, o[i].u64, &k);
+		ck_assert(b);
+		ck_assert(k != NULL);
+		ck_assert(u64_to_node(k)->v == i);
+	}
+
+	/* verify they're gone */
+
+	for (i = 0; i < 8; ++i) {
+		k = NULL;
+		b = shl_htable_remove_u64(&u64ht, o[i].u64, &k);
+		ck_assert(!b);
+		ck_assert(k == NULL);
+	}
+
+	for (i = 0; i < 8; ++i) {
+		k = NULL;
+		b = shl_htable_lookup_u64(&u64ht, o[i].u64, &k);
+		ck_assert(!b);
+		ck_assert(k == NULL);
+	}
+
+	num = 0;
+	shl_htable_visit_u64(&u64ht, test_htable_u64_cb, &num);
+	ck_assert(num == 0);
+
+	num = 0;
+	shl_htable_clear_u64(&u64ht, test_htable_u64_cb, &num);
+	ck_assert(num == 0);
+
+	/* test shl_htable_clear_u64() */
+
+	for (i = 0; i < 8; ++i) {
+		r = shl_htable_insert_u64(&u64ht, &o[i].u64);
+		ck_assert(!r);
+	}
+
+	num = 0;
+	shl_htable_visit_u64(&u64ht, test_htable_u64_cb, &num);
+	ck_assert(num == 8);
+
+	num = 0;
+	shl_htable_clear_u64(&u64ht, test_htable_u64_cb, &num);
+	ck_assert(num == 8);
+
+	/* test high values */
+
+	val = 0xffff000000000000ULL;
+	r = shl_htable_insert_u64(&u64ht, &val);
+	ck_assert(!r);
+
+	b = shl_htable_remove_u64(&u64ht, val, &k);
+	ck_assert(b);
+	ck_assert(k != NULL);
+	ck_assert(k == &val);
+
+	k = NULL;
+	b = shl_htable_remove_u64(&u64ht, val, &k);
+	ck_assert(!b);
+	ck_assert(k == NULL);
+}
+END_TEST
+
 TEST_DEFINE_CASE(misc)
 	TEST(test_htable_str)
 	TEST(test_htable_ulong)
 	TEST(test_htable_uint)
+	TEST(test_htable_u64)
 TEST_END_CASE
 
 TEST_DEFINE(
