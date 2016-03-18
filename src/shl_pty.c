@@ -574,10 +574,10 @@ int shl_pty_signal(struct shl_pty *pty, int sig)
 		return -ENODEV;
 #ifdef TIOCSIG
 	r = ioctl(pty->fd, TIOCSIG, sig);
-#else
-  r = 0;
-#endif
 	return (r < 0) ? -errno : 0;
+#else
+	return -ENOSYS;
+#endif
 }
 
 int shl_pty_resize(struct shl_pty *pty,
