@@ -353,7 +353,11 @@ static int pty_init_child(int fd)
 		return -errno;
 
 	/* open slave-TTY */
+#ifdef O_CLOEXEC
 	slave = open(slave_name, O_RDWR | O_CLOEXEC | O_NOCTTY);
+#else
+	slave = open(slave_name, O_RDWR | O_NOCTTY);
+#endif
 	if (slave < 0)
 		return -errno;
 
@@ -388,14 +392,20 @@ pid_t shl_pty_open(struct shl_pty **out,
 	pty = calloc(1, sizeof(*pty));
 	if (!pty)
 		return -ENOMEM;
-
+#ifdef O_CLOEXEC
 	fd = posix_openpt(O_RDWR | O_NOCTTY | O_CLOEXEC | O_NONBLOCK);
+#else
+	fd = posix_openpt(O_RDWR | O_NOCTTY | O_NONBLOCK);
+#endif
 	if (fd < 0) {
 		free(pty);
 		return -errno;
 	}
-
+#ifdef O_CLOEXEC
 	r = pipe2(comm, O_CLOEXEC);
+#else
+	r = pipe(comm);
+#endif
 	if (r < 0) {
 		r = -errno;
 		close(fd);
@@ -562,8 +572,11 @@ int shl_pty_signal(struct shl_pty *pty, int sig)
 
 	if (!shl_pty_is_open(pty))
 		return -ENODEV;
-
+#ifdef TIOCSIG
 	r = ioctl(pty->fd, TIOCSIG, sig);
+#else
+  r = 0;
+#endif
 	return (r < 0) ? -errno : 0;
 }
 
@@ -602,8 +615,11 @@ int shl_pty_resize(struct shl_pty *pty,
 int shl_pty_bridge_new(void)
 {
 	int fd;
-
+#ifdef EPOLL_CLOEXEC
 	fd = epoll_create1(EPOLL_CLOEXEC);
+#else
+	fd = epoll_create(1);
+#endif
 	if (fd < 0)
 		return -errno;
 
